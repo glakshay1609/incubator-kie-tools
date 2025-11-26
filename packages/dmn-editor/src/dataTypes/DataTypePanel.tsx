@@ -357,18 +357,6 @@ export function DataTypePanel({
         <br />
         {!isStruct(dataType.itemDefinition) && (
           <>
-            <Title size={"md"} headingLevel="h4">
-              Type
-            </Title>
-            <TypeRefSelector
-              heightRef={dmnEditorRootElementRef}
-              isDisabled={isReadOnly}
-              typeRef={resolvedTypeRef}
-              onChange={changeTypeRef}
-              removeDataTypes={[dataType]}
-            />
-            <br />
-            <br />
             {dataType.itemDefinition["@_isCollection"] === true ? (
               <>
                 <Flex direction={{ default: "row" }} alignItems={{ default: "alignItemsCenter" }}>
@@ -401,34 +389,23 @@ export function DataTypePanel({
                   itemDefinition={dataType.itemDefinition}
                   editItemDefinition={editItemDefinition}
                   defaultsToAllowedValues={false}
+                  beforeToggleGroup={
+                    <div style={{ minWidth: "350px" }}>
+                      <Title size={"md"} headingLevel="h4">
+                        Type
+                      </Title>
+                      <TypeRefSelector
+                        heightRef={dmnEditorRootElementRef}
+                        isDisabled={isReadOnly}
+                        typeRef={resolvedTypeRef}
+                        onChange={changeTypeRef}
+                        removeDataTypes={[dataType]}
+                      />
+                    </div>
+                  }
                 />
                 <br />
                 <br />
-                <Flex direction={{ default: "row" }} alignItems={{ default: "alignItemsCenter" }}>
-                  <Title size={"md"} headingLevel="h4">
-                    Collection item constraint
-                  </Title>
-                  <Popover
-                    showClose={false}
-                    isVisible={isCollectionItemConstraintPopoverOpen}
-                    shouldClose={() => setIsCollectionItemConstraintPopoverOpen(false)}
-                    headerContent="Collection Item Constraints (Allowed Values)"
-                    headerIcon={<InfoAltIcon />}
-                    headerComponent="h1"
-                    bodyContent={
-                      <p>
-                        As per the DMN specification, the <b>Allowed Values</b> attribute lists the possible values
-                        <br />
-                        or ranges of values in the base type that are allowed in this ItemDefinition.
-                      </p>
-                    }
-                  >
-                    <InfoAltIcon
-                      onMouseEnter={() => setIsCollectionItemConstraintPopoverOpen(true)}
-                      onMouseLeave={() => setIsCollectionItemConstraintPopoverOpen(false)}
-                    />
-                  </Popover>
-                </Flex>
                 <Alert variant="warning" isInline isPlain title="Deprecated">
                   <p>
                     Creating constraints for the collection items directly on the collection itself is deprecated since
@@ -446,14 +423,25 @@ export function DataTypePanel({
               </>
             ) : (
               <>
-                <Title size={"md"} headingLevel="h4">
-                  Constraints
-                </Title>
                 <ConstraintsFromTypeConstraintAttribute
                   isReadOnly={isReadOnly}
                   itemDefinition={dataType.itemDefinition}
                   editItemDefinition={editItemDefinition}
                   defaultsToAllowedValues={true}
+                  beforeToggleGroup={
+                    <div style={{ minWidth: "350px" }}>
+                      <Title size={"md"} headingLevel="h4">
+                        Type
+                      </Title>
+                      <TypeRefSelector
+                        heightRef={dmnEditorRootElementRef}
+                        isDisabled={isReadOnly}
+                        typeRef={resolvedTypeRef}
+                        onChange={changeTypeRef}
+                        removeDataTypes={[dataType]}
+                      />
+                    </div>
+                  }
                 />
               </>
             )}
