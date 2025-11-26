@@ -407,6 +407,7 @@ export function ConstraintsFromAllowedValuesAttribute({
   itemDefinition,
   editItemDefinition,
   renderOnPropertiesPanel,
+  beforeToggleGroup,
 }: {
   isReadOnly: boolean;
   itemDefinition: Normalized<DMN_LATEST__tItemDefinition>;
@@ -414,6 +415,7 @@ export function ConstraintsFromAllowedValuesAttribute({
   renderOnPropertiesPanel?: boolean;
   isEnumDisabled?: boolean;
   isRangeDisabled?: boolean;
+  beforeToggleGroup?: React.ReactNode;
 }) {
   const { externalModelsByNamespace } = useExternalModels();
   const allDataTypesById = useDmnEditorStore(
@@ -539,6 +541,7 @@ export function ConstraintsFromAllowedValuesAttribute({
       onToggleGroupChange={onToggleGroupChange}
       onConstraintChange={onConstraintChange}
       renderOnPropertiesPanel={renderOnPropertiesPanel}
+      beforeToggleGroup={beforeToggleGroup}
     />
   );
 }
@@ -549,12 +552,14 @@ export function ConstraintsFromTypeConstraintAttribute({
   editItemDefinition,
   renderOnPropertiesPanel,
   defaultsToAllowedValues,
+  beforeToggleGroup,
 }: {
   isReadOnly: boolean;
   itemDefinition: Normalized<DMN_LATEST__tItemDefinition>;
   editItemDefinition: EditItemDefinition;
   renderOnPropertiesPanel?: boolean;
   defaultsToAllowedValues: boolean;
+  beforeToggleGroup?: React.ReactNode;
 }) {
   const { externalModelsByNamespace } = useExternalModels();
   const allDataTypesById = useDmnEditorStore(
@@ -683,6 +688,7 @@ export function ConstraintsFromTypeConstraintAttribute({
       onToggleGroupChange={onToggleGroupChange}
       onConstraintChange={onConstraintChange}
       renderOnPropertiesPanel={renderOnPropertiesPanel}
+      beforeToggleGroup={beforeToggleGroup}
     />
   );
 }
@@ -700,6 +706,7 @@ export function Constraints({
   onToggleGroupChange,
   onConstraintChange,
   renderOnPropertiesPanel,
+  beforeToggleGroup,
 }: {
   isReadOnly: boolean;
   itemDefinitionId: string;
@@ -717,6 +724,7 @@ export function Constraints({
   renderOnPropertiesPanel?: boolean;
   onToggleGroupChange: (selected: boolean, selectedConstraint: ConstraintsType) => void;
   onConstraintChange: (value: string | undefined, selectedConstraint: ConstraintsType) => void;
+  beforeToggleGroup?: React.ReactNode;
 }) {
   const [internalSelectedConstraint, setInternalSelectedConstraint] = useState<{
     selectedConstraint: ConstraintsType;
@@ -769,7 +777,8 @@ export function Constraints({
         </p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            {beforeToggleGroup}
             <ToggleGroup aria-label={"Constraint toggle group"}>
               <ToggleGroupItem
                 text={ConstraintsType.NONE}
