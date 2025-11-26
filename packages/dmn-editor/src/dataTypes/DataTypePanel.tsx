@@ -37,7 +37,7 @@ import { getNewItemDefinition, isStruct } from "./DataTypeSpec";
 import { TrashIcon } from "@patternfly/react-icons/dist/js/icons/trash-icon";
 import { Label } from "@patternfly/react-core/dist/js/components/Label";
 import { CopyIcon } from "@patternfly/react-icons/dist/js/icons/copy-icon";
-import { UniqueNameIndex } from "@kie-tools/dmn-marshaller/dist/schemas/dmn-1_6/Dmn16Spec";
+import { UniqueNameIndex } from "@kie-tools/dmn-marshaller/dist/schemas/dmn-1_5/Dmn15Spec";
 import { buildFeelQNameFromNamespace } from "../feel/buildFeelQName";
 import { buildClipboardFromDataType } from "../clipboard/Clipboard";
 import { ConstraintsFromAllowedValuesAttribute, ConstraintsFromTypeConstraintAttribute } from "./Constraints";
@@ -49,6 +49,7 @@ import { useExternalModels } from "../includedModels/DmnEditorDependenciesContex
 import { Alert } from "@patternfly/react-core/dist/js/components/Alert/Alert";
 import { Popover } from "@patternfly/react-core/dist/js/components/Popover";
 import { InfoAltIcon } from "@patternfly/react-icons/dist/js/icons/info-alt-icon";
+import { MoreVertical } from "lucide-react";
 
 export function DataTypePanel({
   isReadOnly,
@@ -201,7 +202,7 @@ export function DataTypePanel({
   const resolvedTypeRef = useResolvedTypeRef(dataType.itemDefinition.typeRef?.__$$text, dataType.namespace);
 
   return (
-    <>
+    <div style={{ width: "fit-content",minWidth:"100%" }}>
       <Flex
         className={`kie-dmn-editor--sticky-top-glass-header kie-dmn-editor--data-type-panel-header ${
           parents.length > 0 || dataType.namespace !== thisDmnsNamespace
@@ -266,7 +267,7 @@ export function DataTypePanel({
             <Button variant={ButtonVariant.link}>Forward</Button>
             <span>|</span>
             <Button variant={ButtonVariant.link}>View usages</Button> */}
-          <Dropdown
+          {/* <Dropdown
             toggle={
               <KebabToggle id={"toggle-kebab-top-level"} onToggle={(_event, val) => setTopLevelDropdownOpen(val)} />
             }
@@ -320,115 +321,219 @@ export function DataTypePanel({
                 )}
               </React.Fragment>,
             ]}
-          />
+          /> */}
+
+          <div style={{ position: "relative" }}>
+            {/* Lucide MoreVertical icon as toggle */}
+            <div
+              role="button"
+              aria-label="Open Menu"
+              onClick={() => setTopLevelDropdownOpen((prev) => !prev)}
+              className="lucide-icon-button"
+            >
+              <MoreVertical size="80%" strokeWidth={1} />
+            </div>
+
+            {/* Dropdown menu - positioned relative to button */}
+            {topLevelDropdownOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%", // Position below the button
+                  right: 0, // Align to the right edge of button
+                  zIndex: 999,
+                  marginTop: "4px", // Small gap between button and menu
+                }}
+              >
+                <Dropdown
+                  isOpen
+                  position="right"
+                  isPlain
+                  onSelect={() => setTopLevelDropdownOpen(false)}
+                  toggle={<></>}
+                  dropdownItems={[
+                    <DropdownItem key="id" isDisabled icon={<></>}>
+                      <div>
+                        <b>ID: </b>
+                        {dataType.itemDefinition["@_id"]}
+                      </div>
+                    </DropdownItem>,
+                    <DropdownSeparator key="separator-1" style={{ marginBottom: "8px" }} />,
+                    <DropdownItem
+                      key="copy"
+                      icon={<CopyIcon />}
+                      onClick={() => {
+                        const clipboard = buildClipboardFromDataType(dataType, thisDmnsNamespace);
+                        navigator.clipboard.writeText(JSON.stringify(clipboard));
+                      }}
+                    >
+                      Copy
+                    </DropdownItem>,
+                    !isReadOnly && (
+                      <React.Fragment key="remove-fragment">
+                        <DropdownSeparator key="separator-2" />
+                        <DropdownItem
+                          style={{ minWidth: "240px" }}
+                          icon={<TrashIcon />}
+                          onClick={() => {
+                            if (isReadOnly) return;
+
+                            editItemDefinition(dataType.itemDefinition["@_id"]!, (_, items) => {
+                              items?.splice(dataType.index, 1);
+                            });
+                            dmnEditorStoreApi.setState((state) => {
+                              state.dataTypesEditor.activeItemDefinitionId =
+                                dataType.parentId ?? state.dmn.model.definitions.itemDefinition?.[0]?.["@_id"];
+                            });
+                          }}
+                        >
+                          Remove
+                        </DropdownItem>
+                      </React.Fragment>
+                    ),
+                  ]}
+                />
+              </div>
+            )}
+          </div>
+
         </FlexItem>
       </Flex>
+      <div
+        style={{
+          width: "90%",
+          borderBottom: "1px dashed #E2E6EB",
+        }}
+      />
+
       {/* This padding was necessary because PF4 has a @media query that doesn't run inside iframes, for some reason. */}
-      <PageSection style={{ padding: "24px" }} variant="light">
-        <TextArea
-          isDisabled={isReadOnly}
-          key={dataType.itemDefinition["@_id"]}
-          value={dataType.itemDefinition.description?.__$$text}
-          onChange={(_event, val) => changeDescription(val)}
-          placeholder={"Enter a description..."}
-          resizeOrientation={"vertical"}
-          aria-label={"Data type description"}
-        />
+      <PageSection style={{ padding: "22px",paddingTop:"4px" }} variant="light">
+        <div
+          style={{
+            width: "72px",
+            height: "14px",
+            opacity: 1,
+            fontSize: "13px",
+            color: "#444B5A", // subtle readable color
+            marginBottom: "4px",
+            fontFamily:"Inter",
+            marginTop:"12px"
+          }}
+        >
+          Description
+        </div>
+        <div style={{borderRadius:"8px"}}>
+          <TextArea
+            isDisabled={isReadOnly}
+            key={dataType.itemDefinition["@_id"]}
+            value={dataType.itemDefinition.description?.__$$text}
+            onChange={(_event, val) => changeDescription(val)}
+            placeholder={"Enter a description..."}
+            resizeOrientation={"vertical"}
+            aria-label={"Data type description"}
+            style={{
+              borderRadius:"8px",
+              paddingTop:"12px",
+              paddingRight:"2px",
+              paddingBottom:"12px",
+              paddingLeft:"2px",
+              outline:"none",
+              border: "1px solid #E2E6EB",
+              fontSize: "12px",
+              fontFamily:"Inter"
+            }}
+          />
+        </div>
         <br />
-        <Divider inset={{ default: "insetMd" }} />
+        {/* <Divider inset={{ default: "insetMd" }} /> */}
+        <Flex spaceItems={{ default: "spaceItemsMd" }} alignItems={{ default: "alignItemsCenter" }}>
+          {/* Switch 1: Is collection */}
+          <Flex spaceItems={{ default: "spaceItemsSm" }} alignItems={{ default: "alignItemsCenter" }}>
+            <Switch
+              id="is-collection"
+              isChecked={!!dataType.itemDefinition["@_isCollection"]}
+              onChange={(_event, val) => toggleCollection(val)}
+              isDisabled={isReadOnly}
+              aria-label="Is collection"
+            />
+            <label htmlFor="is-collection" style={{ fontSize: "13px", cursor: "pointer",fontFamily:"Inter" }}>
+              Is collection?
+            </label>
+          </Flex>
+
+          {/* Switch 2: Is struct */}
+          <Flex spaceItems={{ default: "spaceItemsSm" }} alignItems={{ default: "alignItemsCenter" }}>
+            <Switch
+              id="is-struct"
+              isChecked={isStruct(dataType.itemDefinition)}
+              onChange={(_event, val) => toggleStruct(val)}
+              isDisabled={isReadOnly}
+              aria-label="Is struct"
+            />
+            <label htmlFor="is-struct" style={{ fontSize: "13px", cursor: "pointer" }}>
+              Is struct?
+            </label>
+          </Flex>
+        </Flex>
+
+
+
         <br />
-        <Switch
-          label={"Is collection?"}
-          isChecked={!!dataType.itemDefinition["@_isCollection"]}
-          onChange={(_event, val) => toggleCollection(val)}
-          isDisabled={isReadOnly}
-        />
-        <br />
-        <br />
-        <Switch
-          label={"Is struct?"}
-          isChecked={isStruct(dataType.itemDefinition)}
-          onChange={(_event, val) => toggleStruct(val)}
-          isDisabled={isReadOnly}
-        ></Switch>
-        <br />
-        <br />
-        <Divider inset={{ default: "insetMd" }} />
-        <br />
+        {/* <Divider inset={{ default: "insetMd" }} /> */}
         {!isStruct(dataType.itemDefinition) && (
           <>
-            <Title size={"md"} headingLevel="h4">
-              Type
-            </Title>
-            <TypeRefSelector
-              heightRef={dmnEditorRootElementRef}
-              isDisabled={isReadOnly}
-              typeRef={resolvedTypeRef}
-              onChange={changeTypeRef}
-              removeDataTypes={[dataType]}
-            />
-            <br />
-            <br />
             {dataType.itemDefinition["@_isCollection"] === true ? (
               <>
-                <Flex direction={{ default: "row" }} alignItems={{ default: "alignItemsCenter" }}>
-                  <Title size={"md"} headingLevel="h4">
-                    Collection constraint
-                  </Title>
-                  <Popover
-                    showClose={false}
-                    isVisible={isCollectionConstraintPopoverOpen}
-                    shouldClose={() => setIsCollectionConstraintPopoverOpen(false)}
-                    headerContent="Collection Constraints (Type Constraint)"
-                    headerIcon={<InfoAltIcon />}
-                    headerComponent="h1"
-                    bodyContent={
-                      <p>
-                        As per the DMN specification, the <b>Type Constraint</b> attribute lists the possible values
-                        <br />
-                        or ranges of values in the base type that are allowed in this ItemDefinition.
-                      </p>
-                    }
-                  >
-                    <InfoAltIcon
-                      onMouseEnter={() => setIsCollectionConstraintPopoverOpen(true)}
-                      onMouseLeave={() => setIsCollectionConstraintPopoverOpen(false)}
-                    />
-                  </Popover>
-                </Flex>
+
                 <ConstraintsFromTypeConstraintAttribute
                   isReadOnly={isReadOnly}
                   itemDefinition={dataType.itemDefinition}
                   editItemDefinition={editItemDefinition}
                   defaultsToAllowedValues={false}
+                  beforeToggleGroup={
+                    <div style={{ minWidth: "350px" }}>
+                      <Title size={"md"} headingLevel="h4">
+                        Type
+                      </Title>
+                      <TypeRefSelector
+                        heightRef={dmnEditorRootElementRef}
+                        isDisabled={isReadOnly}
+                        typeRef={resolvedTypeRef}
+                        onChange={changeTypeRef}
+                        removeDataTypes={[dataType]}
+                      />
+                    </div>
+                  }
+                  headerDisplayGroup={
+                    <Flex direction={{ default: "row" }} alignItems={{ default: "alignItemsCenter" }}>
+                      <Title size={"md"} headingLevel="h4">
+                        Collection constraint
+                      </Title>
+                      <Popover
+                        showClose={false}
+                        isVisible={isCollectionConstraintPopoverOpen}
+                        shouldClose={() => setIsCollectionConstraintPopoverOpen(false)}
+                        headerContent="Collection Constraints (Type Constraint)"
+                        headerIcon={<InfoAltIcon />}
+                        headerComponent="h1"
+                        bodyContent={
+                          <p>
+                            As per the DMN specification, the <b>Type Constraint</b> attribute lists the possible values
+                            <br />
+                            or ranges of values in the base type that are allowed in this ItemDefinition.
+                          </p>
+                        }
+                      >
+                        <InfoAltIcon
+                          onMouseEnter={() => setIsCollectionConstraintPopoverOpen(true)}
+                          onMouseLeave={() => setIsCollectionConstraintPopoverOpen(false)}
+                        />
+                      </Popover>
+                    </Flex>
+                  }
                 />
                 <br />
                 <br />
-                <Flex direction={{ default: "row" }} alignItems={{ default: "alignItemsCenter" }}>
-                  <Title size={"md"} headingLevel="h4">
-                    Collection item constraint
-                  </Title>
-                  <Popover
-                    showClose={false}
-                    isVisible={isCollectionItemConstraintPopoverOpen}
-                    shouldClose={() => setIsCollectionItemConstraintPopoverOpen(false)}
-                    headerContent="Collection Item Constraints (Allowed Values)"
-                    headerIcon={<InfoAltIcon />}
-                    headerComponent="h1"
-                    bodyContent={
-                      <p>
-                        As per the DMN specification, the <b>Allowed Values</b> attribute lists the possible values
-                        <br />
-                        or ranges of values in the base type that are allowed in this ItemDefinition.
-                      </p>
-                    }
-                  >
-                    <InfoAltIcon
-                      onMouseEnter={() => setIsCollectionItemConstraintPopoverOpen(true)}
-                      onMouseLeave={() => setIsCollectionItemConstraintPopoverOpen(false)}
-                    />
-                  </Popover>
-                </Flex>
                 <Alert variant="warning" isInline isPlain title="Deprecated">
                   <p>
                     Creating constraints for the collection items directly on the collection itself is deprecated since
@@ -446,18 +551,56 @@ export function DataTypePanel({
               </>
             ) : (
               <>
-                <Title size={"md"} headingLevel="h4">
-                  Constraints
-                </Title>
                 <ConstraintsFromTypeConstraintAttribute
                   isReadOnly={isReadOnly}
                   itemDefinition={dataType.itemDefinition}
                   editItemDefinition={editItemDefinition}
                   defaultsToAllowedValues={true}
+                  beforeToggleGroup={
+                    <div style={{ minWidth: "350px" }}>
+                      <Title size={"md"} headingLevel="h4">
+                        Type
+                      </Title>
+                      <TypeRefSelector
+                        heightRef={dmnEditorRootElementRef}
+                        isDisabled={isReadOnly}
+                        typeRef={resolvedTypeRef}
+                        onChange={changeTypeRef}
+                        removeDataTypes={[dataType]}
+                      />
+                    </div>
+                  }
+                  headerDisplayGroup={
+                    <Flex direction={{ default: "row" }} alignItems={{ default: "alignItemsCenter" }}>
+                      <Title size={"md"} headingLevel="h4">
+                        Constraint
+                      </Title>
+                      <Popover
+                        showClose={false}
+                        isVisible={isCollectionConstraintPopoverOpen}
+                        shouldClose={() => setIsCollectionConstraintPopoverOpen(false)}
+                        headerContent="Constraints (Type Constraint)"
+                        headerIcon={<InfoAltIcon />}
+                        headerComponent="h1"
+                        bodyContent={
+                          <p>
+                            As per the DMN specification, the <b>Type Constraint</b> attribute lists the possible values
+                            <br />
+                            or ranges of values in the base type that are allowed in this ItemDefinition.
+                          </p>
+                        }
+                      >
+                        <InfoAltIcon
+                          onMouseEnter={() => setIsCollectionConstraintPopoverOpen(true)}
+                          onMouseLeave={() => setIsCollectionConstraintPopoverOpen(false)}
+                        />
+                      </Popover>
+                    </Flex>
+                  }
                 />
               </>
             )}
-          </>
+            </>
         )}
         {isStruct(dataType.itemDefinition) && (
           <ItemComponentsTable
@@ -471,6 +614,6 @@ export function DataTypePanel({
           />
         )}
       </PageSection>
-    </>
+    </div>
   );
 }
