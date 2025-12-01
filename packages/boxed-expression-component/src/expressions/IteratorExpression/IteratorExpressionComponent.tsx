@@ -56,15 +56,22 @@ export type IteratorClause = {
   child: DMN_LATEST__tTypedChildExpression | DMN_LATEST__tChildExpression | string | undefined;
   label: string;
 };
+type Change = {
+  path: string; // e.g., "rule[0].inputEntry[0].text.__$$text"
+  before: any;
+  after: any;
+};
 
 export function IteratorExpressionComponent({
   isNested,
   parentElementId,
   expression: expression,
+  diffsById,
 }: {
   expression: Normalized<BoxedIterator>;
   isNested: boolean;
   parentElementId: string;
+  diffsById?: Map<string, Change[]> | undefined;
 }) {
   const { i18n } = useBoxedExpressionEditorI18n();
   const { expressionHolderId, widthsById, isReadOnly } = useBoxedExpressionEditor();
@@ -151,7 +158,33 @@ export function IteratorExpressionComponent({
     },
     [expression.__$$element]
   );
+  const findDiffKey = useCallback(
+    (exprId?: string, parentId?: string, suffix?: string) => {
+      if (!exprId || !diffsById) return undefined;
 
+      // direct match
+      if (diffsById.has(exprId)) return exprId;
+
+      // nested match like parentId.satisfies.exprId or parentId.in.exprId
+      for (const key of diffsById.keys()) {
+        if (key.includes(exprId) && key.includes(parentId!) && (!suffix || key.includes(suffix))) {
+          return key;
+        }
+      }
+      return undefined;
+    },
+    [diffsById]
+  );
+
+  function getDiffStatusForChanges(changes?: Change[]): string | undefined {
+    if (!changes || changes.length === 0) return undefined;
+    for (const c of changes) {
+      if (c.before === undefined && c.after !== undefined) return "added";
+      if (c.before !== undefined && c.after === undefined) return "deleted";
+      if (c.before !== c.after) return "updated";
+    }
+    return undefined;
+  }
   const getIterableRowElement = useCallback(
     (rowNumber: number) => {
       if (rowNumber === 0) {
@@ -170,6 +203,49 @@ export function IteratorExpressionComponent({
     },
     [expression]
   );
+  const rowDiffs = useMemo(() => {
+    return [0, 1, 2].map((rowIndex) => {
+      // For row 0 ('for'/'some'/'every')
+      if (rowIndex === 0) {
+        const diffKey = `${id}.iteratorVariable`;
+        const changes = diffsById?.get(diffKey);
+        const diffStatus = getDiffStatusForChanges(changes);
+        // For row 0, the cell is both "label" and "child", so one status is enough.
+        return { diffStatus, expressionDiffsById: diffsById };
+      }
+
+      // For row 1 ('in') and 2 ('return'/'satisfies')
+      const suffix = rowIndex === 1 ? "in" : expression.__$$element === "for" ? "return" : "satisfies";
+
+      // Check for changes on the clause itself (e.g., the whole 'in' expression was replaced)
+      const clauseKey = `${id}.${suffix}`;
+      const clauseChanges = diffsById?.get(clauseKey);
+      const clauseDiffStatus = getDiffStatusForChanges(clauseChanges);
+
+      if (clauseDiffStatus) {
+        // "added", "deleted", or "updated"
+        // The clause was added/deleted/updated. Highlight the label.
+        // If added/deleted, don't pass diffs to children.
+        const expressionDiffsById =
+          clauseDiffStatus === "added" || clauseDiffStatus === "deleted" ? new Map() : diffsById;
+        return { diffStatus: clauseDiffStatus, expressionDiffsById };
+      }
+
+      // If the clause itself wasn't replaced, check for changes within its child expression.
+      const clause = { child: getIterableRowElement(rowIndex) };
+      const expr = typeof clause.child !== "string" ? clause.child?.expression : undefined;
+      const exprId = expr?.["@_id"];
+      const childDiffKey = findDiffKey(exprId, id, suffix);
+      if (childDiffKey) {
+        // There are changes in the child. The row is "updated", but we DON'T highlight the label.
+        // The child component will get the diffs and highlight itself.
+        return { diffStatus: undefined, expressionDiffsById: diffsById };
+      }
+
+      // No changes found for this row.
+      return { diffStatus: undefined, expressionDiffsById: diffsById };
+    });
+  }, [id, expression, diffsById, findDiffKey, getIterableRowElement]);
 
   const tableRows = useMemo(() => {
     return [
@@ -188,9 +264,11 @@ export function IteratorExpressionComponent({
   const cellComponentByColumnAccessor: BeeTableProps<ROWTYPE>["cellComponentByColumnAccessor"] = useMemo(() => {
     return {
       label: (props) => {
-        return <BeeTableReadOnlyCell value={props.data[props.rowIndex].label} />;
+        const { diffStatus } = rowDiffs[props.rowIndex];
+        return <BeeTableReadOnlyCell value={props.data[props.rowIndex].label} diffStatus={diffStatus} />;
       },
       child: (props) => {
+        const { diffStatus, expressionDiffsById } = rowDiffs[props.rowIndex];
         if (props.rowIndex === 0) {
           return (
             <IteratorExpressionVariableCell
@@ -199,6 +277,7 @@ export function IteratorExpressionComponent({
               columnIndex={props.columnIndex}
               currentElementId={id}
               beeTableRef={beeTableRef}
+              diffStatus={diffStatus} // For row 0, diffStatus applies to the child as well
             />
           );
         } else if (props.rowIndex === 1 || props.rowIndex === 2) {
@@ -207,6 +286,8 @@ export function IteratorExpressionComponent({
               iteratorClause={props.data[props.rowIndex]}
               {...props}
               parentElementId={parentElementId}
+              diffStatus={undefined} // Child cell itself is never highlighted, only its content.
+              expressionDiffsById={expressionDiffsById}
             />
           );
         } else {
@@ -214,7 +295,7 @@ export function IteratorExpressionComponent({
         }
       },
     };
-  }, [id, parentElementId]);
+  }, [id, parentElementId, rowDiffs]);
 
   const { nestedExpressionContainerValue, onColumnResizingWidthChange } =
     useNestedExpressionContainerWithNestedExpressions(
