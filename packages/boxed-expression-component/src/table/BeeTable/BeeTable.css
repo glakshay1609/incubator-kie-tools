@@ -423,3 +423,11 @@
   box-shadow: none;
   min-width: 210px;
 }
+
+.table-component tr.diff-status-added .row-index-column-cell {
+  background-color: #d4edda;
+}
+
+.table-component tr.diff-status-deleted .row-index-column-cell {
+  background-color: #f8d7da;
+}
