@@ -425,9 +425,9 @@
 }
 
 .table-component tr.diff-status-added .row-index-column-cell {
-  background-color: #d4edda;
+  background-color: #d4edda !important;
 }
 
 .table-component tr.diff-status-deleted .row-index-column-cell {
-  background-color: #f8d7da;
+  background-color: #f8d7da !important;
 }
