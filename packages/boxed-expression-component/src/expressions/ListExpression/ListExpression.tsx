@@ -192,8 +192,8 @@ export function ListExpression({
     const rows = (listExpression.expression ?? []).map((item, rowIndex) => {
       const rowId = item?.["@_id"] ?? generateUuid();
 
-      // For added rows, the key is the index
-      const rowKey = `${id}-${rowIndex}`;
+      // The key is a combination of the item's ID and its index.
+      const rowKey = `${rowId}-${rowIndex}`;
       const rowIndexDiffStatus = rowIndexDiffStatuses.get(rowKey);
 
       // Get diff status for the expression itself (using cleaned map)
@@ -224,27 +224,6 @@ export function ListExpression({
         rowIndexDiffStatus: rowIndexDiffStatus,
       };
     });
-
-    // Splice in the deleted rows
-    if (diffsById) {
-      for (const [key, status] of rowIndexDiffStatuses.entries()) {
-        if (status === "deleted") {
-          const raw = diffsById.get(id);
-          const changes = raw?.get(key);
-          if (changes) {
-            const deletedItem = changes[0].before;
-            const originalIndex = parseInt(key.substring(key.lastIndexOf("-") + 1), 10);
-            rows.splice(originalIndex, 0, {
-              "@_id": deletedItem?.["@_id"] ?? generateUuid(),
-              expression: deletedItem,
-              diffStatus: undefined,
-              rowIndexDiffStatus: "deleted",
-            });
-          }
-        }
-      }
-    }
-
 
     if (rows.length === 0) {
       rows.push({
