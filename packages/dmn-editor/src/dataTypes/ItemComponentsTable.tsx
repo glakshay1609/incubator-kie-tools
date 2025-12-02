@@ -144,6 +144,44 @@ export function ItemComponentsTable({
     });
   }, [dmnEditorStoreApi]);
 
+  const extractDataType = useCallback(
+    (dt: DataType) => {
+      if (isReadOnly) {
+        return;
+      }
+      editItemDefinition(dt.itemDefinition["@_id"]!, (itemDefinition, _, __, itemDefinitions) => {
+        const newItemDefinition = getNewItemDefinition({
+          ...dt.itemDefinition,
+          typeRef: dt.itemDefinition.typeRef,
+          "@_name": `t${dt.itemDefinition["@_name"]}`,
+          "@_isCollection": false,
+        });
+
+        const newItemDefinitionCopy: Normalized<DMN_LATEST__tItemDefinition> = JSON.parse(
+          JSON.stringify(newItemDefinition)
+        ); // Necessary because idRandomizer will mutate this object.
+
+        getNewDmnIdRandomizer()
+          .ack({
+            json: [newItemDefinitionCopy],
+            type: "DMN16__tDefinitions",
+            attr: "itemDefinition",
+          })
+          .randomize();
+
+        itemDefinitions.unshift(newItemDefinitionCopy);
+
+        // Creating a new type is fine, but only update the current type if it is not readOnly
+        if (!isReadOnly) {
+          itemDefinition["@_id"] = generateUuid();
+          itemDefinition.typeRef = { __$$text: newItemDefinitionCopy["@_name"] };
+          itemDefinition.itemComponent = undefined;
+        }
+      });
+    },
+    [editItemDefinition, isReadOnly]
+  );
+
   const { dmnEditorRootElementRef } = useDmnEditor();
 
   return (
@@ -418,7 +456,17 @@ export function ItemComponentsTable({
                         />
                       </td>
                       <td>
-                        {!isStruct(dt.itemDefinition) && (
+                        {isStruct(dt.itemDefinition) ? (
+                          !isReadOnly && (
+                            <Button
+                              className={"kie-dmn-editor--make-reusable-button"}
+                              variant={ButtonVariant.link}
+                              onClick={() => extractDataType(dt)}
+                            >
+                              Make reusable
+                            </Button>
+                          )
+                        ) : (
                           <TypeRefSelector
                             heightRef={dmnEditorRootElementRef}
                             isDisabled={isReadOnly}
@@ -508,39 +556,7 @@ export function ItemComponentsTable({
                                     key={"extract-to-top-level"}
                                     icon={<ImportIcon style={{ transform: "scale(-1, -1)" }} />}
                                     style={{ minWidth: "240px" }}
-                                    onClick={() => {
-                                      editItemDefinition(
-                                        dt.itemDefinition["@_id"]!,
-                                        (itemDefinition, _, __, itemDefinitions) => {
-                                          const newItemDefinition = getNewItemDefinition({
-                                            ...dt.itemDefinition,
-                                            typeRef: dt.itemDefinition.typeRef,
-                                            "@_name": `t${dt.itemDefinition["@_name"]}`,
-                                            "@_isCollection": false,
-                                          });
-
-                                          const newItemDefinitionCopy: Normalized<DMN_LATEST__tItemDefinition> =
-                                            JSON.parse(JSON.stringify(newItemDefinition)); // Necessary because idRandomizer will mutate this object.
-
-                                          getNewDmnIdRandomizer()
-                                            .ack({
-                                              json: [newItemDefinitionCopy],
-                                              type: "DMN16__tDefinitions",
-                                              attr: "itemDefinition",
-                                            })
-                                            .randomize();
-
-                                          itemDefinitions.unshift(newItemDefinitionCopy);
-
-                                          // Creating a new type is fine, but only update the current type if it is not readOnly
-                                          if (!isReadOnly) {
-                                            itemDefinition["@_id"] = generateUuid();
-                                            itemDefinition.typeRef = { __$$text: newItemDefinitionCopy["@_name"] };
-                                            itemDefinition.itemComponent = undefined;
-                                          }
-                                        }
-                                      );
-                                    }}
+                                    onClick={() => extractDataType(dt)}
                                   >
                                     Extract data type
                                   </DropdownItem>
