@@ -18,23 +18,38 @@
  */
 
 import { DmnBuiltInDataType } from "@kie-tools/boxed-expression-component/dist/api";
+import { useMemo } from "react";
 import { useExternalModels } from "../includedModels/DmnEditorDependenciesContext";
 import { useDmnEditorStore } from "../store/StoreContext";
+import { isFeelQName } from "../feel/isFeelQName";
 import { resolveTypeRef } from "./resolveTypeRef";
 
-export function useResolvedTypeRef(typeRef: string | undefined, relativeToNamespace: string | undefined) {
+export function useResolvedTypeRef(typeRef: string | undefined, relativeToNamespace?: string) {
   const { externalModelsByNamespace } = useExternalModels();
 
-  return useDmnEditorStore((s) => {
-    const thisDmnsNamespace = s.dmn.model.definitions["@_namespace"];
-    return resolveTypeRef({
-      typeRef: typeRef,
-      namespace: relativeToNamespace || thisDmnsNamespace,
-      allTopLevelDataTypesByFeelName: s.computed(s).getDataTypes(externalModelsByNamespace)
-        .allTopLevelDataTypesByFeelName,
+  const { dataTypes, thisDmnsNamespace, thisDmnsImportsByNamespace } = useDmnEditorStore((s) => ({
+    thisDmnsNamespace: s.dmn.model.definitions["@_namespace"],
+    dataTypes: s.computed(s).getDataTypes(externalModelsByNamespace),
+    thisDmnsImportsByNamespace: s.computed(s).importsByNamespace(),
+  }));
+
+  return useMemo(
+    () =>
+      resolveTypeRef({
+        typeRef,
+        namespace: relativeToNamespace ?? thisDmnsNamespace,
+        allTopLevelDataTypesByFeelName: dataTypes.allTopLevelDataTypesByFeelName,
+        externalModelsByNamespace,
+        thisDmnsImportsByNamespace,
+        relativeToNamespace: thisDmnsNamespace,
+      }),
+    [
+      typeRef,
+      relativeToNamespace,
+      thisDmnsNamespace,
+      dataTypes.allTopLevelDataTypesByFeelName,
       externalModelsByNamespace,
-      thisDmnsImportsByNamespace: s.computed(s).importsByNamespace(),
-      relativeToNamespace: thisDmnsNamespace,
-    });
-  });
+      thisDmnsImportsByNamespace,
+    ]
+  );
 }

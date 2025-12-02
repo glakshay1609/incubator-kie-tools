@@ -17,17 +17,8 @@
  * under the License.
  */
 
-export type FeelQName = {
-  type: "feel-qname"; // To differentiate from XmlQName
-  importName?: string;
-  localPart: string;
-};
+import { FeelQName } from "./parseFeelQName";
 
-export function parseFeelQName(qName: string): FeelQName {
-  const parts = qName.split(".");
-  return { type: "feel-qname", importName: parts.length > 1 ? parts[0] : undefined, localPart: parts.slice(1).join(".") };
-}
-
-export function buildFeelQName(qName: FeelQName): string {
-  return qName.importName ? `${qName.importName}.${qName.localPart}` : qName.localPart;
+export function isFeelQName(qName?: object): qName is FeelQName {
+  return !!qName && (qName as FeelQName).type === "feel-qname";
 }

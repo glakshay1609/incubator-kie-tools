@@ -83,7 +83,7 @@ export function isCollection(itemDefinition: Normalized<DMN_LATEST__tItemDefinit
 }
 
 export function isStruct(itemDefinition: Normalized<DMN_LATEST__tItemDefinition>) {
-  return !itemDefinition.typeRef && !!itemDefinition.itemComponent;
+  return !!itemDefinition.itemComponent;
 }
 
 export const constrainableBuiltInFeelTypes = new Map<DmnBuiltInDataType, KIE__tConstraintType[]>([
