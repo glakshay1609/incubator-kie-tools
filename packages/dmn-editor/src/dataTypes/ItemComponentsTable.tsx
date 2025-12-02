@@ -56,6 +56,7 @@ import { DMN_LATEST__tItemDefinition } from "@kie-tools/dmn-marshaller";
 import { Normalized } from "@kie-tools/dmn-marshaller/dist/normalization/normalize";
 import { resolveTypeRef } from "./resolveTypeRef";
 import { useExternalModels } from "../includedModels/DmnEditorDependenciesContext";
+import { createDefaultInstance } from "./singleton";
 
 export const BRIGHTNESS_DECREASE_STEP_IN_PERCENTAGE_PER_NESTING_LEVEL = 5;
 export const STARTING_BRIGHTNESS_LEVEL_IN_PERCENTAGE = 95;
@@ -437,6 +438,14 @@ export function ItemComponentsTable({
                                   itemDefinition.allowedValues = undefined;
                                 }
                                 itemDefinition.typeRef = newDataType ? { __$$text: newDataType } : undefined;
+
+                                dmnEditorStoreApi
+                                  .getState()
+                                  .dispatch(dmnEditorStoreApi.getState())
+                                  .dataTypesEditor.setSingletonInstance(
+                                    itemDefinition["@_id"]!,
+                                    createDefaultInstance(itemDefinition, allTopLevelDataTypesByFeelName)
+                                  );
                               });
                             }}
                           />

@@ -87,6 +87,7 @@ export interface State {
   dataTypesEditor: {
     activeItemDefinitionId: string | undefined;
     expandedItemComponentIds: string[];
+    singletonInstances: Map<string, Record<string, any>>;
   };
   navigation: {
     tab: DmnEditorTab;
@@ -180,6 +181,9 @@ export type Dispatch = {
     setEdgeStatus: (edgeId: string, status: Partial<DmnEditorDiagramEdgeStatus>) => void;
     setDividerLineStatus: (decisionServiceId: string, status: Partial<DmnEditorDiagramDividerLineStatus>) => void;
   };
+  dataTypesEditor: {
+    setSingletonInstance: (itemDefinitionId: string, instance: Record<string, any> | undefined) => void;
+  };
 };
 
 export enum DmnEditorTab {
@@ -205,6 +209,7 @@ export const defaultStaticState = (): Omit<State, "dmn" | "dispatch" | "computed
   dataTypesEditor: {
     activeItemDefinitionId: undefined,
     expandedItemComponentIds: [],
+    singletonInstances: new Map(),
   },
   diagram: {
     autoLayout: {
@@ -338,6 +343,15 @@ export function createDmnEditorStore(model: DmnLatestModel, computedCache: Compu
                 } else {
                   s.diagram.movingDividerLines = s.diagram.movingDividerLines.filter((s) => s !== decisionServiceId);
                 }
+              }
+            },
+          },
+          dataTypesEditor: {
+            setSingletonInstance: (itemDefinitionId, instance) => {
+              if (instance) {
+                s.dataTypesEditor.singletonInstances.set(itemDefinitionId, instance);
+              } else {
+                s.dataTypesEditor.singletonInstances.delete(itemDefinitionId);
               }
             },
           },

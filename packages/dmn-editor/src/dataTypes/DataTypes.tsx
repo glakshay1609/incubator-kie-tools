@@ -64,6 +64,7 @@ import { useExternalModels } from "../includedModels/DmnEditorDependenciesContex
 import { useSettings } from "../settings/DmnEditorSettingsContext";
 import { ImportJavaClassesDropdownItem, ImportJavaClassNameConflictsModal } from "./ImportJavaClasses";
 import { useImportJavaClasses } from "./useImportJavaClasses";
+import { createDefaultInstance } from "./singleton";
 
 export type DataType = {
   itemDefinition: Normalized<DMN_LATEST__tItemDefinition>;
@@ -150,6 +151,18 @@ export function DataTypes() {
 
         state.dmn.model.definitions.itemDefinition ??= [];
         consumer(itemDefinition, items, index, state.dmn.model.definitions.itemDefinition, state);
+
+        // START of new logic
+        const allDataTypesByFeelName = new Map(
+          [...allDataTypesById.values()].map((dataType) => [dataType.feelName, dataType])
+        );
+        for (const itemDefinition of state.dmn.model.definitions.itemDefinition) {
+          state.dispatch(state).dataTypesEditor.setSingletonInstance(
+            itemDefinition["@_id"]!,
+            createDefaultInstance(itemDefinition, allDataTypesByFeelName)
+          );
+        }
+        // END of new logic
       });
     },
     [allDataTypesById, dmnEditorStoreApi]

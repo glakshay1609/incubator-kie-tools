@@ -25,6 +25,7 @@ import { NavigationKeysUtils } from "../../keysUtils/keyUtils";
 import { useBoxedExpressionEditor } from "../../BoxedExpressionEditorContext";
 import "./BeeTableEditableCellContent.css";
 import { getOperatingSystem, OperatingSystem } from "@kie-tools-core/operating-system";
+import { FeelIdentifiers } from "@kie-tools/dmn-feel-antlr4-parser";
 
 const CELL_LINE_HEIGHT = 20;
 
@@ -77,15 +78,24 @@ export function BeeTableEditableCellContent({
   }, [isEditing, isReadOnly]);
 
   // FIXME: Tiago --> Temporary fix for the Boxed Expression Editor to work well. Ideally this wouldn't bee here, as the BeeTable should be decoupled from the DMN Editor's Boxed Expression Editor use-case.
-  const { onRequestFeelIdentifiers } = useBoxedExpressionEditor();
+  const { onRequestFeelIdentifiers, singletonInstances } = useBoxedExpressionEditor();
 
   const feelIdentifiers = useMemo(() => {
     if (mode === Mode.Edit) {
-      return onRequestFeelIdentifiers?.();
+      const identifiers = onRequestFeelIdentifiers?.() ?? new FeelIdentifiers({ _readonly_dmnDefinitions: {} as any });
+      if (singletonInstances) {
+        for (const [uuid, instance] of singletonInstances.entries()) {
+          const identifier = identifiers.expressions.get(uuid);
+          if (identifier) {
+            identifier.enrich(instance);
+          }
+        }
+      }
+      return identifiers;
     } else {
       return undefined;
     }
-  }, [mode, onRequestFeelIdentifiers]);
+  }, [mode, onRequestFeelIdentifiers, singletonInstances]);
 
   useEffect(() => {
     setPreviousValue((prev) => (isEditing ? prev : value));

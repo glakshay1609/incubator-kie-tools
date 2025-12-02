@@ -35,6 +35,7 @@ export interface BoxedExpressionEditorContextType {
   dataTypes: DmnDataType[];
   isReadOnly?: boolean;
   evaluationHitsCountById?: Map<string, number>;
+  singletonInstances?: Map<string, Record<string, any>>;
 
   // State
   currentlyOpenContextMenu: string | undefined;
@@ -80,6 +81,7 @@ export function BoxedExpressionEditorContextProvider({
   onRequestFeelIdentifiers,
   widthsById,
   hideDmn14BoxedExpressions,
+  singletonInstances,
 }: React.PropsWithChildren<BoxedExpressionEditorProps>) {
   const [currentlyOpenContextMenu, setCurrentlyOpenContextMenu] = useState<string | undefined>(undefined);
 
@@ -124,6 +126,7 @@ export function BoxedExpressionEditorContextProvider({
         onRequestFeelIdentifiers,
         widthsById,
         hideDmn14BoxedExpressions,
+        singletonInstances,
       }}
     >
       <BoxedExpressionEditorDispatchContext.Provider value={dispatch}>

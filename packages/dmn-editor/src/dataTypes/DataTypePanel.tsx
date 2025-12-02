@@ -62,6 +62,7 @@ export function DataTypePanel({
   editItemDefinition: EditItemDefinition;
 }) {
   const thisDmnsNamespace = useDmnEditorStore((s) => s.dmn.model.definitions["@_namespace"]);
+  const dmnEditorStoreApi = useDmnEditorStoreApi();
 
   const toggleStruct = useCallback(
     (isChecked: boolean) => {
@@ -172,8 +173,6 @@ export function DataTypePanel({
     },
     [editItemDefinition, isReadOnly]
   );
-
-  const dmnEditorStoreApi = useDmnEditorStoreApi();
 
   const [dropdownOpenFor, setDropdownOpenFor] = useState<string | undefined>(undefined);
   const [topLevelDropdownOpen, setTopLevelDropdownOpen] = useState<boolean>(false);
@@ -384,7 +383,7 @@ export function DataTypePanel({
                     headerComponent="h1"
                     bodyContent={
                       <p>
-                        As per the DMN specification, the <b>Type Constraint</b> attribute lists the possible values
+                        As per the DmnBuiltInDataType specification, the <b>Type Constraint</b> attribute lists the possible values
                         <br />
                         or ranges of values in the base type that are allowed in this ItemDefinition.
                       </p>
@@ -417,7 +416,7 @@ export function DataTypePanel({
                     headerComponent="h1"
                     bodyContent={
                       <p>
-                        As per the DMN specification, the <b>Allowed Values</b> attribute lists the possible values
+                        As per the DmnBuiltInDataType specification, the <b>Allowed Values</b> attribute lists the possible values
                         <br />
                         or ranges of values in the base type that are allowed in this ItemDefinition.
                       </p>

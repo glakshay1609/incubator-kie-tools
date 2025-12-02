@@ -65,6 +65,7 @@ export interface BoxedExpressionEditorProps {
   onRequestFeelIdentifiers?: OnRequestFeelIdentifiers;
   /** Hide DMN 1.4 boxed expressions */
   hideDmn14BoxedExpressions?: boolean;
+  singletonInstances?: Map<string, Record<string, any>>;
 }
 
 export function BoxedExpressionEditor({
@@ -84,6 +85,7 @@ export function BoxedExpressionEditor({
   widthsById,
   onWidthsChange,
   hideDmn14BoxedExpressions,
+  singletonInstances,
 }: BoxedExpressionEditorProps) {
   return (
     <I18nDictionariesProvider
@@ -108,6 +110,7 @@ export function BoxedExpressionEditor({
         evaluationHitsCountById={evaluationHitsCountById}
         widthsById={widthsById}
         hideDmn14BoxedExpressions={hideDmn14BoxedExpressions}
+        singletonInstances={singletonInstances}
       >
         <ExpressionDefinitionRoot
           expressionHolderId={expressionHolderId}

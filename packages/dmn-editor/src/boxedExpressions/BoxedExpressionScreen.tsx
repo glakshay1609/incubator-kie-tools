@@ -104,6 +104,7 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
 
   const activeDrgElementId = useDmnEditorStore((s) => s.boxedExpressionEditor.activeDrgElementId);
   const isPropertiesPanelOpen = useDmnEditorStore((s) => s.boxedExpressionEditor.propertiesPanel.isOpen);
+  const singletonInstances = useDmnEditorStore((s) => s.dataTypesEditor.singletonInstances);
 
   const externalDmnsByNamespace = useDmnEditorStore(
     (s) => s.computed(s).getDirectlyIncludedExternalModelsByNamespace(externalModelsByNamespace).dmns
@@ -548,6 +549,7 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
                 ? evaluationResultsByNodeId?.get(activeDrgElementId ?? "")?.evaluationHitsCountByRuleOrRowId
                 : undefined
             }
+            singletonInstances={singletonInstances}
           />
         </div>
       </>
