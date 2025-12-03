@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             id="CustomerEmploymentDetails"
+             name="CustomerEmploymentDetails"
+             namespace="https://github.com/kiegroup/dmn-stories"
+             expressionLanguage="https://www.omg.org/spec/DMN/20180521/FEEL/">
+
+  <itemDefinition name="Employment_Detail">
+    <itemComponent name="duration" typeRef="number"/>
+    <itemComponent name="companyName" typeRef="string"/>
+    <itemComponent name="status" typeRef="string"/>
+  </itemDefinition>
+
+  <itemDefinition name="Customer">
+    <itemComponent name="emp_det" typeRef="Employment_Detail"/>
+    <itemComponent name="age" typeRef="number"/>
+    <itemComponent name="name" typeRef="string"/>
+  </itemDefinition>
+
+  <decision id="GetEmploymentDuration" name="GetEmploymentDuration">
+    <variable name="EmploymentDuration" typeRef="number"/>
+    <informationRequirement>
+      <requiredInput href="#Customer"/>
+    </informationRequirement>
+    <literalExpression>
+      <text>Customer.emp_det.duration</text>
+    </literalExpression>
+  </decision>
+
+  <inputData id="Customer" name="Customer">
+    <variable name="Customer" typeRef="Customer"/>
+  </inputData>
+
+</definitions>

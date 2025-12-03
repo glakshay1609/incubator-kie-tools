@@ -29,6 +29,25 @@ The original `org.kie:kie-dmn-test-resources` also contains _invalid_ models, bu
 
 The command `mvn clean verify` downloads the jar and extract the models under `dist/`.
 
+### Instantiate in FEEL
+
+To instantiate the `Customer` and `Employment_Detail` data types, you can use the following FEEL expression:
+
+```feel
+Customer(
+  emp_det: Employment_Detail(duration: 5, companyName: "ABC Corp", status: "Working"),
+  age: 30,
+  name: "Lakshay"
+)
+```
+
+You can then access the nested properties like this:
+
+```feel
+customer.emp_det.duration
+customer.emp_det.companyName
+```
+
 To make them available for testing purpose:
 
 1. set the `KOGITO_RUNTIME_version` in the terminal (if different from the default one)
