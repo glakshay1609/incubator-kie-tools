@@ -108,6 +108,7 @@ export class IdentifiersRepository {
     this.currentUuidPrefix = "";
 
     this.loadIdentifiers(dmnDefinitions);
+    this.resolveDataTypes();
   }
 
   get identifiersContextIndexedByUuid(): Map<string, IdentifierContext> {
@@ -154,6 +155,30 @@ export class IdentifiersRepository {
     this.currentUuidPrefix = "";
 
     this.loadIdentifiers(this.dmnDefinitions);
+    this.resolveDataTypes();
+  }
+
+  private resolveDataTypes() {
+    this._dataTypes.forEach((dataType) => {
+      this.resolveDataType(dataType, new Set());
+    });
+  }
+
+  private resolveDataType(dataType: DataType, visited: Set<string>) {
+    if (visited.has(dataType.name)) {
+      return;
+    }
+    visited.add(dataType.name);
+
+    if (dataType.typeRef && this.dataTypes.has(dataType.typeRef)) {
+      const referencedDataType = this.dataTypes.get(dataType.typeRef);
+      if (referencedDataType && referencedDataType.properties.size > 0) {
+        dataType.properties = new Map(referencedDataType.properties);
+      }
+    }
+    dataType.properties.forEach((property) => {
+      this.resolveDataType(property, new Set(visited));
+    });
   }
 
   private createDataTypes(definitions: DmnDefinitions) {
