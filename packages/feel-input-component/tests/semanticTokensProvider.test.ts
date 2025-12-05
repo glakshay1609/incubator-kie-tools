@@ -17,11 +17,11 @@
  * under the License.
  */
 
-import { SemanticTokensProvider } from "@kie-tools/feel-input-component/dist/semanticTokensProvider";
+import { SemanticTokensProvider } from "../src/semanticTokensProvider";
 import { BuiltInTypes, DmnDefinitions, FeelIdentifiers } from "@kie-tools/dmn-feel-antlr4-parser";
 
 import * as Monaco from "@kie-tools-core/monaco-editor";
-import { Element } from "@kie-tools/feel-input-component/dist/themes/Element";
+import { Element } from "../src/themes/Element";
 import * as fs from "fs";
 import * as path from "path";
 import { getMarshaller } from "@kie-tools/dmn-marshaller";

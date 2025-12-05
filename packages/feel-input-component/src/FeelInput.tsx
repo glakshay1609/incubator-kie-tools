@@ -185,28 +185,43 @@ export const FeelInput = React.forwardRef<FeelInputRef, FeelInputProps>(
             }
 
             const lastValidSymbol = getLastValidSymbolAtPosition(currentParsedExpression, pos);
+            const currentSymbol = getSymbolAtPosition(currentParsedExpression, pos);
 
             if (
               lastValidSymbol &&
               lastValidSymbol.feelSymbolNature !== FeelSyntacticSymbolNature.Unknown &&
               expression.charAt(lastValidSymbol.startIndex + lastValidSymbol.length) === "."
             ) {
+              let range;
+              if (currentSymbol && currentSymbol.text !== ".") {
+                range = {
+                  startLineNumber: currentSymbol.startLine + 1,
+                  endLineNumber: currentSymbol.endLine + 1,
+                  startColumn: currentSymbol.startIndex + 1,
+                  endColumn: currentSymbol.startIndex + 1 + currentSymbol.text.length,
+                };
+              } else {
+                range = {
+                  startLineNumber: position.lineNumber,
+                  endLineNumber: position.lineNumber,
+                  startColumn: position.column,
+                  endColumn: position.column,
+                };
+              }
               for (const scopeSymbol of lastValidSymbol.scopeSymbols) {
                 variablesSuggestions.push({
                   kind: Monaco.languages.CompletionItemKind.Variable,
                   label: scopeSymbol.name,
                   insertText: scopeSymbol.name,
                   detail: scopeSymbol.type,
-                  range: {
-                    startLineNumber: lastValidSymbol.startLine + 1,
-                    endLineNumber: lastValidSymbol.endLine + 1,
-                    startColumn: lastValidSymbol.startIndex + lastValidSymbol.length + 2, // It is +2 because of the . (dot)
-                    endColumn: lastValidSymbol.startIndex + lastValidSymbol.length + 2 + scopeSymbol.name.length,
-                  },
+                  sortText:
+                    currentSymbol && currentSymbol.text !== "." && scopeSymbol.name.startsWith(currentSymbol.text)
+                      ? "1"
+                      : "2",
+                  range: range,
                 } as Monaco.languages.CompletionItem);
               }
             } else {
-              const currentSymbol = getSymbolAtPosition(currentParsedExpression, pos);
               for (const scopeSymbol of currentParsedExpression.availableSymbols) {
                 // Consider this scenario:
                 // 1. User typed: Tax In
@@ -227,7 +242,7 @@ export const FeelInput = React.forwardRef<FeelInputRef, FeelInputProps>(
                       startLineNumber: currentSymbol.startLine + 1,
                       endLineNumber: currentSymbol.endLine + 1,
                       startColumn: currentSymbol.startIndex + 1,
-                      endColumn: currentSymbol.startIndex + 1 + scopeSymbol.name.length,
+                      endColumn: currentSymbol.startIndex + 1 + currentSymbol.text.length,
                     },
                   } as Monaco.languages.CompletionItem);
                 } else {
