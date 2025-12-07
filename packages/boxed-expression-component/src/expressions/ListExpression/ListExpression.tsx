@@ -48,20 +48,35 @@ import { DMN_LATEST__tContextEntry } from "@kie-tools/dmn-marshaller";
 import { findAllIdsDeep } from "../../ids/ids";
 import "./ListExpression.css";
 
-export type ROWTYPE = Normalized<DMN_LATEST__tContextEntry>;
+export type ROWTYPE = Normalized<DMN_LATEST__tContextEntry> & {
+  rowIndexDiffStatus?: "added" | "deleted";
+};
+
+type Change = {
+  path: string;
+  before: any;
+  after: any;
+};
+
+type ChangeMap = Map<string, Change[]>;
+
 
 export function ListExpression({
   isNested,
   parentElementId,
   expression: listExpression,
+  diffsById,
 }: {
   expression: Normalized<BoxedList>;
   isNested: boolean;
   parentElementId: string;
+  diffsById: any;
 }) {
   const { i18n } = useBoxedExpressionEditorI18n();
   const { setExpression, setWidthsById } = useBoxedExpressionEditorDispatch();
   const { expressionHolderId, widthsById, isReadOnly } = useBoxedExpressionEditor();
+
+  const id = listExpression["@_id"]!;
 
   /// //////////////////////////////////////////////////////
   /// ///////////// RESIZING WIDTHS ////////////////////////
@@ -113,26 +128,120 @@ export function ListExpression({
     [i18n]
   );
 
+  // Process diffsById to extract row-level add/delete and clean the map
+  const { cleanedDiffsById, rowIndexDiffStatuses } = useMemo(() => {
+    if (!diffsById) {
+      return {
+        cleanedDiffsById: diffsById,
+        rowIndexDiffStatuses: new Map<string, "added" | "deleted">()
+      };
+    }
+
+    // Get the raw change map for this list expression
+    const raw = diffsById.get(id);
+
+    if (!raw) {
+      return {
+        cleanedDiffsById: diffsById,
+        rowIndexDiffStatuses: new Map<string, "added" | "deleted">()
+      };
+    }
+
+    const cleanedMap = new Map(diffsById);
+    const cleanedRaw = new Map(raw);
+    const rowStatuses = new Map<string, "added" | "deleted">();
+
+    // Iterate through all changes in the raw map
+    for (const [itemId, changes] of raw.entries()) {
+      let isRowLevelChange = false;
+
+      for (const change of changes) {
+        // Check if this is a row-level add/delete (path equals the itemId itself)
+        if (change.path === itemId) {
+          isRowLevelChange = true;
+
+          if (change.before === undefined && change.after !== undefined) {
+            rowStatuses.set(itemId, "added");
+          } else if (change.before !== undefined && change.after === undefined) {
+            rowStatuses.set(itemId, "deleted");
+          }
+          break;
+        }
+      }
+
+      // If this was a row-level change, remove it from cleaned map
+      if (isRowLevelChange) {
+        cleanedRaw.delete(itemId);
+      }
+    }
+
+    // Update the cleaned diffsById with the cleaned raw map
+    if (cleanedRaw.size > 0) {
+      cleanedMap.set(id, cleanedRaw);
+    } else {
+      cleanedMap.delete(id);
+    }
+
+    return { cleanedDiffsById: cleanedMap, rowIndexDiffStatuses: rowStatuses };
+  }, [diffsById, id]);
+
+
   const beeTableRows = useMemo(() => {
-    const rows = (listExpression.expression ?? []).map((item) => ({
-      "@_id": generateUuid(),
-      expression: item?.__$$element ? item : undefined!,
-    }));
+    const raw = cleanedDiffsById?.get(id);
+
+    const rows = (listExpression.expression ?? []).map((item, rowIndex) => {
+      const rowId = item?.["@_id"] ?? generateUuid();
+
+      // The key is a combination of the item's ID and its index.
+      const rowKey = `${rowId}-${rowIndex}`;
+      const rowIndexDiffStatus = rowIndexDiffStatuses.get(rowKey);
+
+      // Get diff status for the expression itself (using cleaned map)
+      const exprId = item?.["@_id"];
+      let exprDiffStatus: "added" | "deleted" | "updated" | undefined;
+
+      if (raw && exprId) {
+        const changes = raw.get(exprId);
+        if (changes && changes.length > 0) {
+          for (const c of changes) {
+            if (c.before === undefined && c.after !== undefined) {
+              exprDiffStatus = "added";
+            } else if (c.before !== undefined && c.after === undefined) {
+              exprDiffStatus = "deleted";
+            } else if (c.before !== c.after) {
+              exprDiffStatus = "updated";
+            }
+          }
+        }
+      }
+
+      return {
+        "@_id": rowId,
+        expression: item?.__$$element
+          ? { ...item, diffStatus: exprDiffStatus }
+          : undefined!,
+        diffStatus: exprDiffStatus,
+        rowIndexDiffStatus: rowIndexDiffStatus,
+      };
+    });
 
     if (rows.length === 0) {
       rows.push({
         "@_id": generateUuid(),
         expression: undefined!,
+        diffStatus: undefined,
+        rowIndexDiffStatus: undefined
       });
     }
 
     return rows;
-  }, [listExpression.expression]);
+  }, [listExpression.expression, cleanedDiffsById, rowIndexDiffStatuses, id, diffsById]);
+
 
   const beeTableColumns = useMemo<ReactTable.Column<ROWTYPE>[]>(
     () => [
       {
-        accessor: expressionHolderId as any, // FIXME: https://github.com/apache/incubator-kie-issues/issues/169
+        accessor: expressionHolderId as any,
         label: listExpression["@_label"] ?? DEFAULT_EXPRESSION_VARIABLE_NAME,
         dataType: listExpression["@_typeRef"] ?? DmnBuiltInDataType.Undefined,
         isRowIndexColumn: false,
@@ -150,10 +259,15 @@ export function ListExpression({
   const cellComponentByColumnAccessor: BeeTableProps<ROWTYPE>["cellComponentByColumnAccessor"] = useMemo(
     (): { [p: string]: ({ rowIndex, data, columnIndex }: BeeTableCellProps<ROWTYPE>) => JSX.Element } => ({
       [expressionHolderId]: (props) => (
-        <ListItemCell parentElementId={parentElementId} listExpression={listExpression} {...props} />
+        <ListItemCell
+          parentElementId={parentElementId}
+          listExpression={listExpression}
+          diffsById={cleanedDiffsById}
+          {...props}
+        />
       ),
     }),
-    [expressionHolderId, listExpression, parentElementId]
+    [expressionHolderId, listExpression, parentElementId, cleanedDiffsById]
   );
 
   const onRowAdded = useCallback(
@@ -171,7 +285,6 @@ export function ListExpression({
             newItems.splice(args.beforeIndex, 0, newEntry);
           }
 
-          // Do not inline this variable for type safety. See https://github.com/microsoft/TypeScript/issues/241
           const ret: Normalized<BoxedList> = {
             ...prev,
             expression: newItems,

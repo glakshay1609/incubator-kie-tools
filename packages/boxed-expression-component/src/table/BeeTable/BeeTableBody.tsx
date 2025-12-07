@@ -91,7 +91,13 @@ export function BeeTableBody<R extends object>({
 
       let evaluationHitsCountBadgeColumnIndex = -1;
       const renderTr = () => (
-        <tr className={rowClassName} key={rowKey} data-testid={`kie-tools--bee--expression-row-${rowIndex}`}>
+        <tr
+          className={`${rowClassName} ${
+            (row.original as any).rowIndexDiffStatus ? `diff-status-${(row.original as any).rowIndexDiffStatus}` : ""
+          }`}
+          key={rowKey}
+          data-testid={`kie-tools--bee--expression-row-${rowIndex}`}
+        >
           {row.cells.map((cell, cellIndex) => {
             const columnKey = getColumnKey(reactTableInstance.allColumns[cellIndex]);
             const isColumnToRender =
