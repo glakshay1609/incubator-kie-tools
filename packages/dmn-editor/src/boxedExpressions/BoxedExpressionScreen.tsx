@@ -66,6 +66,7 @@ import { Text, TextContent, TextVariants } from "@patternfly/react-core/dist/js/
 import { Flex, FlexItem } from "@patternfly/react-core/dist/js/layouts/Flex";
 import { ArrowRightIcon } from "@patternfly/react-icons/dist/js/icons/arrow-right-icon";
 import { InfoIcon } from "@patternfly/react-icons/dist/js/icons/info-icon";
+import { TextInput } from "@patternfly/react-core/dist/js/components/TextInput";
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as RF from "reactflow";
@@ -444,15 +445,6 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
     setIsRefactorModalOpen(false);
   }, [refactor, variableChangedArgs]);
 
-  const onConfirmRenameOnly = useCallback(() => {
-    setVariableChangedArgs(undefined);
-    setNewExpression(undefined);
-    setIsRefactorModalOpen(false);
-    dmnEditorStoreApi.setState((state) => {
-      setExpression({ definitions: state.dmn.model.definitions, expression: newExpression });
-    });
-  }, [dmnEditorStoreApi, newExpression, setExpression]);
-
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
@@ -463,7 +455,7 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
 
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {
-      if (e.button !== 0) {
+      if (e.button !== 0 || e.target !== viewportRef.current) {
         return;
       }
       e.preventDefault();
@@ -579,12 +571,47 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
   }, [handleFitView]);
 
   useLayoutEffect(() => {
-    if (expression) {
+    if (activeDrgElementId) {
       setTimeout(() => {
         handleFitView();
       }, 0);
     }
-  }, [expression, handleFitView]);
+  }, [activeDrgElementId, handleFitView]);
+
+  const [zoomInput, setZoomInput] = useState(`${Math.round(zoom * 100)}%`);
+  const [isEditingZoom, setIsEditingZoom] = useState(false);
+
+  useEffect(() => {
+    setZoomInput(`${Math.round(zoom * 100)}%`);
+  }, [zoom]);
+
+  const handleZoomInputChange = useCallback((value: string) => {
+    setZoomInput(value);
+  }, []);
+
+  const handleZoomInputKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        const newZoomValue = parseInt(zoomInput.replace("%", ""), 10);
+        if (!isNaN(newZoomValue) && newZoomValue > 0) {
+          const newZoom = newZoomValue / 100;
+          const clampedZoom = Math.max(0.1, Math.min(newZoom, 2));
+
+          if (viewportRef.current) {
+            const rect = viewportRef.current.getBoundingClientRect();
+            const newX = rect.width / 2 - (rect.width / 2 - position.x) * (clampedZoom / zoom);
+            const newY = rect.height / 2 - (rect.height / 2 - position.y) * (clampedZoom / zoom);
+            setPosition({ x: newX, y: newY });
+          }
+          setZoom(clampedZoom);
+        } else {
+          setZoomInput(`${Math.round(zoom * 100)}%`);
+        }
+        e.currentTarget.blur();
+      }
+    },
+    [zoomInput, zoom, position.x, position.y]
+  );
 
   const onConfirmRenameOnly = useCallback(() => {
     setVariableChangedArgs(undefined);
@@ -724,6 +751,53 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
               gap: "10px",
             }}
           >
+            {isEditingZoom ? (
+              <input
+                type="text"
+                autoFocus
+                value={zoomInput}
+                onChange={(e) => setZoomInput(e.target.value)}
+                onKeyDown={handleZoomInputKeyDown}
+                onBlur={() => {
+                  setIsEditingZoom(false);
+                  setZoomInput(`${Math.round(zoom * 100)}%`);
+                }}
+                style={{
+                  width: "60px",
+                  height: "24px",
+                  background: "#fff",
+                  border: "1px solid #CED6E0",
+                  borderRadius: "999px",
+                  textAlign: "center",
+                  fontSize: "0.75em",
+                  color: "#052C65",
+                  fontFamily: "Inter",
+                  boxShadow: "0 0 2px 1px rgba(0, 0, 0, 0.08)",
+                }}
+              />
+            ) : (
+              <div
+                onDoubleClick={() => setIsEditingZoom(true)}
+                style={{
+                  width: "60px",
+                  height: "24px",
+                  background: "#fff",
+                  border: "1px solid #CED6E0",
+                  borderRadius: "999px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "0.75em",
+                  color: "#052C65",
+                  fontFamily: "Inter",
+                  boxShadow: "0 0 2px 1px rgba(0, 0, 0, 0.08)",
+                  cursor: "pointer",
+                }}
+                title="Double-click to set custom zoom"
+              >
+                {`${Math.round(zoom * 100)}%`}
+              </div>
+            )}
             <Button variant="plain" onClick={handleZoomIn} aria-label="Zoom In">
               <PlusIcon />
             </Button>
