@@ -66,14 +66,9 @@ import { Text, TextContent, TextVariants } from "@patternfly/react-core/dist/js/
 import { Flex, FlexItem } from "@patternfly/react-core/dist/js/layouts/Flex";
 import { ArrowRightIcon } from "@patternfly/react-icons/dist/js/icons/arrow-right-icon";
 import { InfoIcon } from "@patternfly/react-icons/dist/js/icons/info-icon";
-import { TextInput } from "@patternfly/react-core/dist/js/components/TextInput";
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as RF from "reactflow";
-import { Button } from "@patternfly/react-core/dist/js/components/Button";
-import { ExpandArrowsAltIcon } from "@patternfly/react-icons/dist/js/icons/expand-arrows-alt-icon";
-import { MinusIcon } from "@patternfly/react-icons/dist/js/icons/minus-icon";
-import { PlusIcon } from "@patternfly/react-icons/dist/js/icons/plus-icon";
 import { builtInFeelTypes } from "../dataTypes/BuiltInFeelTypes";
 import { DataTypeIndex } from "../dataTypes/DataTypes";
 import { isStruct } from "../dataTypes/DataTypeSpec";
@@ -445,150 +440,6 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
     setIsRefactorModalOpen(false);
   }, [refactor, variableChangedArgs]);
 
-  const [zoom, setZoom] = useState(1);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-
-  const isPanning = useRef(false);
-  const panStart = useRef({ x: 0, y: 0 });
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.button !== 0 || e.target !== viewportRef.current) {
-        return;
-      }
-      e.preventDefault();
-      e.stopPropagation();
-      isPanning.current = true;
-      panStart.current = { x: e.clientX - position.x, y: e.clientY - position.y };
-      if (viewportRef.current) {
-        viewportRef.current.style.cursor = "grabbing";
-      }
-    },
-    [position]
-  );
-
-  const onMouseUp = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    isPanning.current = false;
-    if (viewportRef.current) {
-      viewportRef.current.style.cursor = "grab";
-    }
-  }, []);
-
-  const onMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isPanning.current) {
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    setPosition({
-      x: e.clientX - panStart.current.x,
-      y: e.clientY - panStart.current.y,
-    });
-  }, []);
-
-  const handleZoomIn = useCallback(() => {
-    if (!viewportRef.current) {
-      return;
-    }
-    const rect = viewportRef.current.getBoundingClientRect();
-    const newZoom = Math.min(2, zoom + 0.1);
-    const newX = rect.width / 2 - (rect.width / 2 - position.x) * (newZoom / zoom);
-    const newY = rect.height / 2 - (rect.height / 2 - position.y) * (newZoom / zoom);
-
-    setZoom(newZoom);
-    setPosition({ x: newX, y: newY });
-  }, [position, zoom]);
-
-  const handleZoomOut = useCallback(() => {
-    if (!viewportRef.current) {
-      return;
-    }
-    const rect = viewportRef.current.getBoundingClientRect();
-    const newZoom = Math.max(0.1, zoom - 0.1);
-    const newX = rect.width / 2 - (rect.width / 2 - position.x) * (newZoom / zoom);
-    const newY = rect.height / 2 - (rect.height / 2 - position.y) * (newZoom / zoom);
-
-    setZoom(newZoom);
-    setPosition({ x: newX, y: newY });
-  }, [position, zoom]);
-
-  const handleFitView = useCallback((isInitialLoad = false) => {
-    if (!viewportRef.current || !contentRef.current) {
-      return;
-    }
-
-    const viewportWidth = viewportRef.current.offsetWidth;
-    const viewportHeight = viewportRef.current.offsetHeight;
-    const contentWidth = contentRef.current.offsetWidth;
-    const contentHeight = contentRef.current.offsetHeight;
-
-    if (contentWidth <= 0 || contentHeight <= 0) {
-      return;
-    }
-
-    if (isInitialLoad && contentWidth <= viewportWidth && contentHeight <= viewportHeight) {
-      setZoom(1);
-      setPosition({ x: 0, y: 0 });
-      return;
-    }
-
-    const newZoom = Math.min(viewportWidth / contentWidth, viewportHeight / contentHeight, 1);
-
-    setZoom(newZoom);
-    setPosition({ x: 0, y: 0 });
-  }, []);
-
-  useEffect(() => {
-    handleFitView(true);
-  }, [handleFitView]);
-
-  useLayoutEffect(() => {
-    if (activeDrgElementId) {
-      setTimeout(() => {
-        handleFitView(true);
-      }, 0);
-    }
-  }, [activeDrgElementId, handleFitView]);
-
-  const [zoomInput, setZoomInput] = useState(`${Math.round(zoom * 100)}%`);
-  const [isEditingZoom, setIsEditingZoom] = useState(false);
-
-  useEffect(() => {
-    setZoomInput(`${Math.round(zoom * 100)}%`);
-  }, [zoom]);
-
-  const handleZoomInputChange = useCallback((value: string) => {
-    setZoomInput(value);
-  }, []);
-
-  const handleZoomInputKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
-        const newZoomValue = parseInt(zoomInput.replace("%", ""), 10);
-        if (!isNaN(newZoomValue) && newZoomValue > 0) {
-          const newZoom = newZoomValue / 100;
-          const clampedZoom = Math.max(0.1, Math.min(newZoom, 2));
-
-          if (viewportRef.current) {
-            const rect = viewportRef.current.getBoundingClientRect();
-            const newX = rect.width / 2 - (rect.width / 2 - position.x) * (clampedZoom / zoom);
-            const newY = rect.height / 2 - (rect.height / 2 - position.y) * (clampedZoom / zoom);
-            setPosition({ x: newX, y: newY });
-          }
-          setZoom(clampedZoom);
-        } else {
-          setZoomInput(`${Math.round(zoom * 100)}%`);
-        }
-        e.currentTarget.blur();
-      }
-    },
-    [zoomInput, zoom, position.x, position.y]
-  );
-
   const onConfirmRenameOnly = useCallback(() => {
     setVariableChangedArgs(undefined);
     setNewExpression(undefined);
@@ -676,113 +527,28 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
           }}
         />
 
-        <div
-          style={{ flexGrow: 1, overflow: "hidden", cursor: "grab", position: "relative" }}
-          ref={viewportRef}
-          onMouseDown={onMouseDown}
-          onMouseUp={onMouseUp}
-          onMouseMove={onMouseMove}
-          onMouseLeave={onMouseUp}
-        >
-          <div
-            ref={contentRef}
-            style={{
-              transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
-              transformOrigin: "0 0",
-              width: "max-content",
-            }}
-          >
-            <BoxedExpressionEditor
-              beeGwtService={beeGwtService}
-              pmmlDocuments={pmmlDocuments}
-              isResetSupportedOnRootExpression={isResetSupportedOnRootExpression}
-              expressionHolderId={activeDrgElementId!}
-              expressionHolderName={drgElement?.variable?.["@_name"] ?? drgElement?.["@_name"] ?? ""}
-              expressionHolderTypeRef={
-                drgElement?.variable?.["@_typeRef"] ?? expression?.boxedExpression?.["@_typeRef"]
-              }
-              expression={expression?.boxedExpression}
-              onExpressionChange={onExpressionChange}
-              dataTypes={dataTypes}
-              scrollableParentRef={container}
-              onRequestFeelIdentifiers={onRequestFeelIdentifiers}
-              widthsById={widthsById}
-              onWidthsChange={onWidthsChange}
-              isReadOnly={settings.isReadOnly}
-              evaluationHitsCountById={
-                isEvaluationHighlightsEnabled
-                  ? evaluationResultsByNodeId?.get(activeDrgElementId ?? "")?.evaluationHitsCountByRuleOrRowId
-                  : undefined
-              }
-            />
-          </div>
-          <div
-            style={{
-              position: "absolute",
-              bottom: "20px",
-              right: "20px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "10px",
-            }}
-          >
-            {isEditingZoom ? (
-              <input
-                type="text"
-                autoFocus
-                value={zoomInput}
-                onChange={(e) => setZoomInput(e.target.value)}
-                onKeyDown={handleZoomInputKeyDown}
-                onBlur={() => {
-                  setIsEditingZoom(false);
-                  setZoomInput(`${Math.round(zoom * 100)}%`);
-                }}
-                style={{
-                  width: "60px",
-                  height: "24px",
-                  background: "#fff",
-                  border: "1px solid #CED6E0",
-                  borderRadius: "999px",
-                  textAlign: "center",
-                  fontSize: "0.75em",
-                  color: "#052C65",
-                  fontFamily: "Inter",
-                  boxShadow: "0 0 2px 1px rgba(0, 0, 0, 0.08)",
-                }}
-              />
-            ) : (
-              <div
-                onDoubleClick={() => setIsEditingZoom(true)}
-                style={{
-                  width: "60px",
-                  height: "24px",
-                  background: "#fff",
-                  border: "1px solid #CED6E0",
-                  borderRadius: "999px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "0.75em",
-                  color: "#052C65",
-                  fontFamily: "Inter",
-                  boxShadow: "0 0 2px 1px rgba(0, 0, 0, 0.08)",
-                  cursor: "pointer",
-                }}
-                title="Double-click to set custom zoom"
-              >
-                {`${Math.round(zoom * 100)}%`}
-              </div>
-            )}
-            <Button variant="plain" onClick={handleZoomIn} aria-label="Zoom In">
-              <PlusIcon />
-            </Button>
-            <Button variant="plain" onClick={handleZoomOut} aria-label="Zoom Out">
-              <MinusIcon />
-            </Button>
-            <Button variant="plain" onClick={handleFitView} aria-label="Fit View">
-              <ExpandArrowsAltIcon />
-            </Button>
-          </div>
+        <div style={{ flexGrow: 1 }}>
+          <BoxedExpressionEditor
+            beeGwtService={beeGwtService}
+            pmmlDocuments={pmmlDocuments}
+            isResetSupportedOnRootExpression={isResetSupportedOnRootExpression}
+            expressionHolderId={activeDrgElementId!}
+            expressionHolderName={drgElement?.variable?.["@_name"] ?? drgElement?.["@_name"] ?? ""}
+            expressionHolderTypeRef={drgElement?.variable?.["@_typeRef"] ?? expression?.boxedExpression?.["@_typeRef"]}
+            expression={expression?.boxedExpression}
+            onExpressionChange={onExpressionChange}
+            dataTypes={dataTypes}
+            scrollableParentRef={container}
+            onRequestFeelIdentifiers={onRequestFeelIdentifiers}
+            widthsById={widthsById}
+            onWidthsChange={onWidthsChange}
+            isReadOnly={settings.isReadOnly}
+            evaluationHitsCountById={
+              isEvaluationHighlightsEnabled
+                ? evaluationResultsByNodeId?.get(activeDrgElementId ?? "")?.evaluationHitsCountByRuleOrRowId
+                : undefined
+            }
+          />
         </div>
       </>
     </>
