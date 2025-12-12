@@ -490,34 +490,6 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
     });
   }, []);
 
-  const onWheel = useCallback(
-    (e: React.WheelEvent) => {
-      e.stopPropagation();
-
-      if (!viewportRef.current) {
-        return;
-      }
-
-      const rect = viewportRef.current.getBoundingClientRect();
-      const wheel = e.deltaY < 0 ? 1 : -1;
-      const zoomIntensity = 0.1;
-      const newZoom = Math.max(0.1, zoom + wheel * zoomIntensity);
-
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-
-      const x = (mouseX - position.x) / zoom;
-      const y = (mouseY - position.y) / zoom;
-
-      const newX = mouseX - x * newZoom;
-      const newY = mouseY - y * newZoom;
-
-      setZoom(newZoom);
-      setPosition({ x: newX, y: newY });
-    },
-    [position, zoom]
-  );
-
   const handleZoomIn = useCallback(() => {
     if (!viewportRef.current) {
       return;
@@ -711,7 +683,6 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
           onMouseUp={onMouseUp}
           onMouseMove={onMouseMove}
           onMouseLeave={onMouseUp}
-          onWheel={onWheel}
         >
           <div
             ref={contentRef}
