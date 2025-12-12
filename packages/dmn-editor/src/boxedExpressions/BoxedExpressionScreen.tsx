@@ -69,6 +69,10 @@ import { InfoIcon } from "@patternfly/react-icons/dist/js/icons/info-icon";
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as RF from "reactflow";
+import { Button } from "@patternfly/react-core/dist/js/components/Button";
+import { ExpandArrowsAltIcon } from "@patternfly/react-icons/dist/js/icons/expand-arrows-alt-icon";
+import { MinusIcon } from "@patternfly/react-icons/dist/js/icons/minus-icon";
+import { PlusIcon } from "@patternfly/react-icons/dist/js/icons/plus-icon";
 import { builtInFeelTypes } from "../dataTypes/BuiltInFeelTypes";
 import { DataTypeIndex } from "../dataTypes/DataTypes";
 import { isStruct } from "../dataTypes/DataTypeSpec";
@@ -449,6 +453,148 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
     });
   }, [dmnEditorStoreApi, newExpression, setExpression]);
 
+  const [zoom, setZoom] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  const isPanning = useRef(false);
+  const panStart = useRef({ x: 0, y: 0 });
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const onMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button !== 0) {
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      isPanning.current = true;
+      panStart.current = { x: e.clientX - position.x, y: e.clientY - position.y };
+      if (viewportRef.current) {
+        viewportRef.current.style.cursor = "grabbing";
+      }
+    },
+    [position]
+  );
+
+  const onMouseUp = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isPanning.current = false;
+    if (viewportRef.current) {
+      viewportRef.current.style.cursor = "grab";
+    }
+  }, []);
+
+  const onMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isPanning.current) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    setPosition({
+      x: e.clientX - panStart.current.x,
+      y: e.clientY - panStart.current.y,
+    });
+  }, []);
+
+  const onWheel = useCallback(
+    (e: React.WheelEvent) => {
+      e.stopPropagation();
+
+      if (!viewportRef.current) {
+        return;
+      }
+
+      const rect = viewportRef.current.getBoundingClientRect();
+      const wheel = e.deltaY < 0 ? 1 : -1;
+      const zoomIntensity = 0.1;
+      const newZoom = Math.max(0.1, zoom + wheel * zoomIntensity);
+
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const x = (mouseX - position.x) / zoom;
+      const y = (mouseY - position.y) / zoom;
+
+      const newX = mouseX - x * newZoom;
+      const newY = mouseY - y * newZoom;
+
+      setZoom(newZoom);
+      setPosition({ x: newX, y: newY });
+    },
+    [position, zoom]
+  );
+
+  const handleZoomIn = useCallback(() => {
+    if (!viewportRef.current) {
+      return;
+    }
+    const rect = viewportRef.current.getBoundingClientRect();
+    const newZoom = Math.min(2, zoom + 0.1);
+    const newX = rect.width / 2 - (rect.width / 2 - position.x) * (newZoom / zoom);
+    const newY = rect.height / 2 - (rect.height / 2 - position.y) * (newZoom / zoom);
+
+    setZoom(newZoom);
+    setPosition({ x: newX, y: newY });
+  }, [position, zoom]);
+
+  const handleZoomOut = useCallback(() => {
+    if (!viewportRef.current) {
+      return;
+    }
+    const rect = viewportRef.current.getBoundingClientRect();
+    const newZoom = Math.max(0.1, zoom - 0.1);
+    const newX = rect.width / 2 - (rect.width / 2 - position.x) * (newZoom / zoom);
+    const newY = rect.height / 2 - (rect.height / 2 - position.y) * (newZoom / zoom);
+
+    setZoom(newZoom);
+    setPosition({ x: newX, y: newY });
+  }, [position, zoom]);
+
+  const handleFitView = useCallback(() => {
+    if (!viewportRef.current || !contentRef.current) {
+      return;
+    }
+
+    const viewportWidth = viewportRef.current.offsetWidth;
+    const viewportHeight = viewportRef.current.offsetHeight;
+    const contentWidth = contentRef.current.offsetWidth;
+    const contentHeight = contentRef.current.offsetHeight;
+
+    if (contentWidth <= 0 || contentHeight <= 0) {
+      return;
+    }
+
+    const newZoom = Math.min(viewportWidth / contentWidth, viewportHeight / contentHeight, 1);
+    const newX = (viewportWidth - contentWidth * newZoom) / 2;
+    const newY = (viewportHeight - contentHeight * newZoom) / 2;
+
+    setZoom(newZoom);
+    setPosition({ x: newX, y: newY });
+  }, []);
+
+  useEffect(() => {
+    handleFitView();
+  }, [handleFitView]);
+
+  useLayoutEffect(() => {
+    if (expression) {
+      setTimeout(() => {
+        handleFitView();
+      }, 0);
+    }
+  }, [expression, handleFitView]);
+
+  const onConfirmRenameOnly = useCallback(() => {
+    setVariableChangedArgs(undefined);
+    setNewExpression(undefined);
+    setIsRefactorModalOpen(false);
+    dmnEditorStoreApi.setState((state) => {
+      setExpression({ definitions: state.dmn.model.definitions, expression: newExpression });
+    });
+  }, [dmnEditorStoreApi, newExpression, setExpression]);
+
   return (
     <>
       <>
@@ -527,28 +673,67 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
           }}
         />
 
-        <div style={{ flexGrow: 1 }}>
-          <BoxedExpressionEditor
-            beeGwtService={beeGwtService}
-            pmmlDocuments={pmmlDocuments}
-            isResetSupportedOnRootExpression={isResetSupportedOnRootExpression}
-            expressionHolderId={activeDrgElementId!}
-            expressionHolderName={drgElement?.variable?.["@_name"] ?? drgElement?.["@_name"] ?? ""}
-            expressionHolderTypeRef={drgElement?.variable?.["@_typeRef"] ?? expression?.boxedExpression?.["@_typeRef"]}
-            expression={expression?.boxedExpression}
-            onExpressionChange={onExpressionChange}
-            dataTypes={dataTypes}
-            scrollableParentRef={container}
-            onRequestFeelIdentifiers={onRequestFeelIdentifiers}
-            widthsById={widthsById}
-            onWidthsChange={onWidthsChange}
-            isReadOnly={settings.isReadOnly}
-            evaluationHitsCountById={
-              isEvaluationHighlightsEnabled
-                ? evaluationResultsByNodeId?.get(activeDrgElementId ?? "")?.evaluationHitsCountByRuleOrRowId
-                : undefined
-            }
-          />
+        <div
+          style={{ flexGrow: 1, overflow: "hidden", cursor: "grab", position: "relative" }}
+          ref={viewportRef}
+          onMouseDown={onMouseDown}
+          onMouseUp={onMouseUp}
+          onMouseMove={onMouseMove}
+          onMouseLeave={onMouseUp}
+          onWheel={onWheel}
+        >
+          <div
+            ref={contentRef}
+            style={{
+              transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
+              transformOrigin: "0 0",
+              width: "max-content",
+            }}
+          >
+            <BoxedExpressionEditor
+              beeGwtService={beeGwtService}
+              pmmlDocuments={pmmlDocuments}
+              isResetSupportedOnRootExpression={isResetSupportedOnRootExpression}
+              expressionHolderId={activeDrgElementId!}
+              expressionHolderName={drgElement?.variable?.["@_name"] ?? drgElement?.["@_name"] ?? ""}
+              expressionHolderTypeRef={
+                drgElement?.variable?.["@_typeRef"] ?? expression?.boxedExpression?.["@_typeRef"]
+              }
+              expression={expression?.boxedExpression}
+              onExpressionChange={onExpressionChange}
+              dataTypes={dataTypes}
+              scrollableParentRef={container}
+              onRequestFeelIdentifiers={onRequestFeelIdentifiers}
+              widthsById={widthsById}
+              onWidthsChange={onWidthsChange}
+              isReadOnly={settings.isReadOnly}
+              evaluationHitsCountById={
+                isEvaluationHighlightsEnabled
+                  ? evaluationResultsByNodeId?.get(activeDrgElementId ?? "")?.evaluationHitsCountByRuleOrRowId
+                  : undefined
+              }
+            />
+          </div>
+          <div
+            style={{
+              position: "absolute",
+              bottom: "20px",
+              right: "20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+            }}
+          >
+            <Button variant="plain" onClick={handleZoomIn} aria-label="Zoom In">
+              <PlusIcon />
+            </Button>
+            <Button variant="plain" onClick={handleZoomOut} aria-label="Zoom Out">
+              <MinusIcon />
+            </Button>
+            <Button variant="plain" onClick={handleFitView} aria-label="Fit View">
+              <ExpandArrowsAltIcon />
+            </Button>
+          </div>
         </div>
       </>
     </>
