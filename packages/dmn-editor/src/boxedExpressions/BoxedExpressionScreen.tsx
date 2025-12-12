@@ -544,7 +544,7 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
     setPosition({ x: newX, y: newY });
   }, [position, zoom]);
 
-  const handleFitView = useCallback(() => {
+  const handleFitView = useCallback((isInitialLoad = false) => {
     if (!viewportRef.current || !contentRef.current) {
       return;
     }
@@ -558,22 +558,26 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
       return;
     }
 
+    if (isInitialLoad && contentWidth <= viewportWidth && contentHeight <= viewportHeight) {
+      setZoom(1);
+      setPosition({ x: 0, y: 0 });
+      return;
+    }
+
     const newZoom = Math.min(viewportWidth / contentWidth, viewportHeight / contentHeight, 1);
-    const newX = (viewportWidth - contentWidth * newZoom) / 2;
-    const newY = (viewportHeight - contentHeight * newZoom) / 2;
 
     setZoom(newZoom);
-    setPosition({ x: newX, y: newY });
+    setPosition({ x: 0, y: 0 });
   }, []);
 
   useEffect(() => {
-    handleFitView();
+    handleFitView(true);
   }, [handleFitView]);
 
   useLayoutEffect(() => {
     if (activeDrgElementId) {
       setTimeout(() => {
-        handleFitView();
+        handleFitView(true);
       }, 0);
     }
   }, [activeDrgElementId, handleFitView]);
