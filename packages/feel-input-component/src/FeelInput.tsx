@@ -51,6 +51,7 @@ export interface FeelInputProps {
   options?: Monaco.editor.IStandaloneEditorConstructionOptions;
   feelIdentifiers?: FeelIdentifiers;
   expressionId?: string;
+  scrollableParentRef?: React.RefObject<HTMLElement>;
 }
 
 export interface FeelInputRef {
@@ -89,6 +90,7 @@ export const FeelInput = React.forwardRef<FeelInputRef, FeelInputProps>(
       options,
       feelIdentifiers,
       expressionId,
+      scrollableParentRef,
     },
     forwardRef
   ) => {
@@ -288,8 +290,12 @@ export const FeelInput = React.forwardRef<FeelInputRef, FeelInputProps>(
     }, [enabled, expressionId, feelIdentifiers, semanticTokensProvider]);
 
     const config = useMemo(() => {
-      return feelDefaultConfig(options);
-    }, [options]);
+      const config = feelDefaultConfig(options);
+      if (scrollableParentRef?.current) {
+        config.overflowWidgetsDomNode = scrollableParentRef.current;
+      }
+      return config;
+    }, [options, scrollableParentRef]);
 
     // This creates the Monaco Editor
     useEffect(() => {
