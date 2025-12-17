@@ -27,9 +27,14 @@ import {
   boxedExpressionEditorI18nDefaults,
 } from "./i18n";
 import { ExpressionDefinitionRoot } from "./expressions/ExpressionDefinitionRoot/ExpressionDefinitionRoot";
-import { BoxedExpressionEditorContextProvider, OnExpressionChange } from "./BoxedExpressionEditorContext";
+import {
+  BoxedExpressionEditorContextProvider,
+  OnExpressionChange,
+} from "./BoxedExpressionEditorContext";
 import { FeelIdentifiers } from "@kie-tools/dmn-feel-antlr4-parser";
 import "./@types/react-table";
+import { ExpressionEditorPalette } from "./palette/ExpressionEditorPalette";
+import { ForwardedRef, forwardRef } from "react";
 
 export type OnRequestFeelIdentifiers = () => FeelIdentifiers;
 
@@ -65,6 +70,12 @@ export interface BoxedExpressionEditorProps {
   onRequestFeelIdentifiers?: OnRequestFeelIdentifiers;
   /** Hide DMN 1.4 boxed expressions */
   hideDmn14BoxedExpressions?: boolean;
+  /** The zoom level, as a percentage */
+  zoom?: number;
+  /** Called every time the zoom level changes */
+  onZoomChange?: (zoom: number) => void;
+  /** Called when the user clicks the "fit to view" button */
+  onFitView?: () => void;
 }
 
 export function BoxedExpressionEditor({
@@ -84,7 +95,10 @@ export function BoxedExpressionEditor({
   widthsById,
   onWidthsChange,
   hideDmn14BoxedExpressions,
-}: BoxedExpressionEditorProps) {
+  zoom,
+  onZoomChange,
+  onFitView,
+}: BoxedExpressionEditorProps, ref: ForwardedRef<HTMLDivElement>) {
   return (
     <I18nDictionariesProvider
       defaults={boxedExpressionEditorI18nDefaults}
@@ -93,6 +107,7 @@ export function BoxedExpressionEditor({
       ctx={BoxedExpressionEditorI18nContext}
     >
       <BoxedExpressionEditorContextProvider
+        forwardedRef={ref}
         scrollableParentRef={scrollableParentRef}
         beeGwtService={beeGwtService}
         expressionHolderId={expressionHolderId}
@@ -108,6 +123,9 @@ export function BoxedExpressionEditor({
         evaluationHitsCountById={evaluationHitsCountById}
         widthsById={widthsById}
         hideDmn14BoxedExpressions={hideDmn14BoxedExpressions}
+        zoom={zoom}
+        onZoomChange={onZoomChange}
+        onFitView={onFitView}
       >
         <ExpressionDefinitionRoot
           expressionHolderId={expressionHolderId}
@@ -116,7 +134,10 @@ export function BoxedExpressionEditor({
           expression={expression}
           isResetSupported={isResetSupportedOnRootExpression}
         />
+        <ExpressionEditorPalette />
       </BoxedExpressionEditorContextProvider>
     </I18nDictionariesProvider>
   );
 }
+
+export const BoxedExpressionEditorWrapper = forwardRef(BoxedExpressionEditor);

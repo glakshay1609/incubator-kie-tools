@@ -25,7 +25,7 @@ import {
   generateUuid,
   PmmlDocument,
 } from "@kie-tools/boxed-expression-component/dist/api";
-import { BoxedExpressionEditor } from "@kie-tools/boxed-expression-component/dist/BoxedExpressionEditor";
+import { BoxedExpressionEditorWrapper } from "@kie-tools/boxed-expression-component/dist/BoxedExpressionEditor";
 import { FeelIdentifiers } from "@kie-tools/dmn-feel-antlr4-parser";
 import { IdentifiersRefactor } from "@kie-tools/dmn-language-service";
 import {
@@ -122,6 +122,26 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
 
   const { evaluationResultsByNodeId } = useDmnEditor();
   const isEvaluationHighlightsEnabled = useDmnEditorStore((s) => s.diagram.overlays.enableEvaluationHighlights);
+
+  const [zoom, setZoom] = useState(1);
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  const onZoomChange = useCallback((newZoom: number) => {
+    setZoom(Math.min(2, Math.max(0.1, newZoom)));
+  }, []);
+
+  const onFitView = useCallback(() => {
+    if (editorRef.current) {
+      const parentWidth = editorRef.current.parentElement?.clientWidth ?? 0;
+      const expressionWidth = editorRef.current.scrollWidth ?? 0;
+      if (parentWidth < expressionWidth) {
+        setZoom((prev) => {
+          const newZoom = prev * (parentWidth / expressionWidth);
+          return Math.min(2, Math.max(0.1, newZoom));
+        });
+      }
+    }
+  }, []);
 
   const onRequestFeelIdentifiers = useCallback(() => {
     return new FeelIdentifiers({
@@ -528,7 +548,8 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
         />
 
         <div style={{ flexGrow: 1 }}>
-          <BoxedExpressionEditor
+          <BoxedExpressionEditorWrapper
+            ref={editorRef}
             beeGwtService={beeGwtService}
             pmmlDocuments={pmmlDocuments}
             isResetSupportedOnRootExpression={isResetSupportedOnRootExpression}
@@ -548,6 +569,9 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
                 ? evaluationResultsByNodeId?.get(activeDrgElementId ?? "")?.evaluationHitsCountByRuleOrRowId
                 : undefined
             }
+            zoom={zoom}
+            onZoomChange={onZoomChange}
+            onFitView={onFitView}
           />
         </div>
       </>

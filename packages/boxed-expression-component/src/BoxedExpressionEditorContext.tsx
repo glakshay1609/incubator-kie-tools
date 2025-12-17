@@ -18,7 +18,7 @@
  */
 
 import * as React from "react";
-import { useContext, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useMemo, useRef, useState } from "react";
 import { BeeGwtService, BoxedExpression, DmnDataType, ExpressionChangedArgs, Normalized, PmmlDocument } from "./api";
 import { BoxedExpressionEditorProps, OnRequestFeelIdentifiers } from "./BoxedExpressionEditor";
 import "./BoxedExpressionEditorContext.css";
@@ -35,6 +35,7 @@ export interface BoxedExpressionEditorContextType {
   dataTypes: DmnDataType[];
   isReadOnly?: boolean;
   evaluationHitsCountById?: Map<string, number>;
+  zoom: number;
 
   // State
   currentlyOpenContextMenu: string | undefined;
@@ -48,6 +49,8 @@ export interface BoxedExpressionEditorContextType {
 export interface BoxedExpressionEditorDispatchContextType {
   setExpression: OnExpressionChange;
   setWidthsById: (mutation: ({ newMap }: { newMap: Map<string, number[]> }) => void) => void;
+  onZoomChange: (zoom: number) => void;
+  onFitView: () => void;
 }
 
 export const BoxedExpressionEditorContext = React.createContext<BoxedExpressionEditorContextType>(
@@ -80,10 +83,14 @@ export function BoxedExpressionEditorContextProvider({
   onRequestFeelIdentifiers,
   widthsById,
   hideDmn14BoxedExpressions,
-}: React.PropsWithChildren<BoxedExpressionEditorProps>) {
+  zoom = 1,
+  onZoomChange = () => {},
+  onFitView = () => {},
+  forwardedRef,
+}: React.PropsWithChildren<BoxedExpressionEditorProps & { forwardedRef: React.RefObject<HTMLDivElement> }>) {
   const [currentlyOpenContextMenu, setCurrentlyOpenContextMenu] = useState<string | undefined>(undefined);
 
-  const editorRef = useRef<HTMLDivElement>(null);
+  const editorRef = forwardedRef;
 
   const widthsByIdRef = useRef<Map<string, number[]>>(widthsById);
   React.useEffect(() => {
@@ -99,8 +106,10 @@ export function BoxedExpressionEditorContextProvider({
         mutation({ newMap: newWidthsById });
         onWidthsChange(newWidthsById);
       },
+      onZoomChange,
+      onFitView,
     }),
-    [onExpressionChange, onWidthsChange]
+    [onExpressionChange, onWidthsChange, onZoomChange, onFitView]
   );
 
   return (
@@ -117,6 +126,7 @@ export function BoxedExpressionEditorContextProvider({
         isReadOnly,
         pmmlDocuments,
         evaluationHitsCountById,
+        zoom,
 
         //state // FIXME: Move to a separate context (https://github.com/apache/incubator-kie-issues/issues/168)
         currentlyOpenContextMenu,
@@ -127,7 +137,15 @@ export function BoxedExpressionEditorContextProvider({
       }}
     >
       <BoxedExpressionEditorDispatchContext.Provider value={dispatch}>
-        <div className="boxed-expression-provider" ref={editorRef}>
+        <div
+          className="boxed-expression-provider"
+          ref={editorRef}
+          style={{
+            fontSize: `${16 * zoom}px`,
+            lineHeight: `${24 * zoom}px`,
+            position: "relative",
+          }}
+        >
           {children}
         </div>
       </BoxedExpressionEditorDispatchContext.Provider>
