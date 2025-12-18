@@ -740,19 +740,31 @@ export const Diagram = React.forwardRef<DiagramRef, { container: React.RefObject
                     .computed(state)
                     .getDiagramData(externalModelsByNamespace)
                     .nodesById.get(change.id)!;
+                  const minSizes = MIN_NODE_SIZES[node.type as NodeType]({
+                    snapGrid: state.diagram.snapGrid,
+                    isAlternativeInputDataShape: state.computed(state).isAlternativeInputDataShape(),
+                  });
+
                   // We only need to resize the node if its snapped dimensions change, as snapping is non-destructive.
-                  const snappedShape = snapShapeDimensions(
+                  const snappedShapeFromState = snapShapeDimensions(state.diagram.snapGrid, node.data.shape, minSizes);
+                  const snappedShapeFromChange = snapShapeDimensions(
                     state.diagram.snapGrid,
-                    node.data.shape,
-                    MIN_NODE_SIZES[node.type as NodeType]({
-                      snapGrid: state.diagram.snapGrid,
-                      isAlternativeInputDataShape: state.computed(state).isAlternativeInputDataShape(),
-                    })
+                    {
+                      ...node.data.shape,
+                      "dc:Bounds": {
+                        ...node.data.shape["dc:Bounds"]!,
+                        "@_width": change.dimensions.width,
+                        "@_height": change.dimensions.height,
+                      },
+                    },
+                    minSizes
                   );
+
                   if (
-                    snappedShape.width !== change.dimensions.width ||
-                    snappedShape.height !== change.dimensions.height
+                    snappedShapeFromState.width !== snappedShapeFromChange.width ||
+                    snappedShapeFromState.height !== snappedShapeFromChange.height
                   ) {
+                    //This is necessary because RF doesn't trigger a `position` when a node is only resizing.
                     resizeNode({
                       definitions: state.dmn.model.definitions,
                       drdIndex: state.computed(state).getDrdIndex(),
