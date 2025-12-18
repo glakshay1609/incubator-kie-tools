@@ -136,7 +136,7 @@ const PAN_ON_DRAG = [1, 2];
 
 const FIT_VIEW_OPTIONS: RF.FitViewOptions = { maxZoom: 1, minZoom: 0.1, duration: 400 };
 
-export const DEFAULT_VIEWPORT = { x: 100, y: 100, zoom: 1 };
+export const DEFAULT_VIEWPORT = { x: -100, y: -100, zoom: 1 };
 
 const DELETE_NODE_KEY_CODES = ["Backspace", "Delete"];
 
