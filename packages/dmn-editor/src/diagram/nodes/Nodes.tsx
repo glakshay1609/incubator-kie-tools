@@ -74,6 +74,8 @@ import { useExternalModels } from "../../includedModels/DmnEditorDependenciesCon
 import { NODE_LAYERS } from "../../store/computed/computeDiagramData";
 import { useSettings } from "../../settings/DmnEditorSettingsContext";
 import { useDmnEditor } from "../../DmnEditorContext";
+import { useDmnEditorDiagramContainer } from "../DiagramContainerContext";
+import { useReactFlow } from "reactflow";
 import { useRefactor } from "../../refactor/RefactorConfirmationDialog";
 import { setDecisionServiceVisiblity } from "../../mutations/setDecisionServiceVisiblity";
 import {
@@ -1531,6 +1533,9 @@ type NodeResizeHandleProps = {
 );
 
 export function NodeResizerHandle(props: NodeResizeHandleProps) {
+  const { container } = useDmnEditorDiagramContainer();
+  const reactFlow = useReactFlow();
+
   const minSize =
     props.nodeType === NODE_TYPES.inputData
       ? MIN_NODE_SIZES[props.nodeType]({
@@ -1541,7 +1546,30 @@ export function NodeResizerHandle(props: NodeResizeHandleProps) {
           snapGrid: props.snapGrid,
         });
   return (
-    <RF.NodeResizeControl style={resizerControlStyle} minWidth={minSize["@_width"]} minHeight={minSize["@_height"]}>
+    <RF.NodeResizeControl
+      style={resizerControlStyle}
+      minWidth={minSize["@_width"]}
+      minHeight={minSize["@_height"]}
+      onResize={(e, params) => {
+        if (!container.current) {
+          return;
+        }
+        const bounds = container.current.getBoundingClientRect();
+        const PADDING = 40;
+        if (e.clientX < bounds.left + PADDING) {
+          reactFlow.panBy({ x: 20, y: 0 });
+        }
+        if (e.clientX > bounds.right - PADDING) {
+          reactFlow.panBy({ x: -20, y: 0 });
+        }
+        if (e.clientY < bounds.top + PADDING) {
+          reactFlow.panBy({ x: 0, y: 20 });
+        }
+        if (e.clientY > bounds.bottom - PADDING) {
+          reactFlow.panBy({ x: 0, y: -20 });
+        }
+      }}
+    >
       <div
         data-testid={`kie-tools--dmn-editor--${props.nodeName}-resize-handle`}
         style={{
