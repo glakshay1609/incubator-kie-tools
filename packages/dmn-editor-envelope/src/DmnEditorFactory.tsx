@@ -18,7 +18,7 @@
  */
 
 import * as React from "react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import {
   Editor,
   EditorFactory,
@@ -124,6 +124,11 @@ export function DmnEditorRootWrapper({
   channelType?: ChannelType;
   onOpenedBoxedExpressionEditorNodeChange?: (newOpenedNodeId: string | undefined) => void;
 }) {
+  const [locale, setLocale] = useState<string>("en");
+  useEffect(() => {
+    envelopeContext?.channelApi.requests.kogitoI18n_getLocale().then(setLocale);
+  }, [envelopeContext?.channelApi.requests]);
+
   const onNewEdit = useCallback(
     (workspaceEdit: WorkspaceEdit) => {
       envelopeContext?.channelApi.notifications.kogitoWorkspace_newEdit.send(workspaceEdit);
@@ -189,6 +194,7 @@ export function DmnEditorRootWrapper({
       isReadOnly={isReadOnly}
       isImportDataTypesFromJavaClassesSupported={isImportDataTypesFromJavaClassesSupported}
       javaCodeCompletionService={javaCodeCompletionService}
+      locale={locale}
     />
   );
 }
