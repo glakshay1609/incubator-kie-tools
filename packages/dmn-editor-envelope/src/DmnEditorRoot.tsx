@@ -79,6 +79,7 @@ export type DmnEditorRootProps = {
   isReadOnly: boolean;
   isImportDataTypesFromJavaClassesSupported?: boolean;
   javaCodeCompletionService?: JavaCodeCompletionExposedInteropApi;
+  locale: string;
 };
 
 export type DmnEditorRootState = {
@@ -520,6 +521,7 @@ export class DmnEditorRoot extends React.Component<DmnEditorRootProps, DmnEditor
               onRequestToJumpToPath={this.onOpenFileFromPathRelativeToTheOpenFile}
               onRequestToResolvePath={this.onRequestToResolvePathRelativeToTheOpenFile}
               // (end)
+              locale={this.props.locale}
             />
             <ExternalModelsManager
               workspaceRootAbsolutePosixPath={this.props.workspaceRootAbsolutePosixPath}
