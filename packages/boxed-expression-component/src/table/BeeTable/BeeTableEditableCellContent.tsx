@@ -18,7 +18,7 @@
  */
 
 import * as Monaco from "@kie-tools-core/monaco-editor";
-import { FeelInput, FeelInputRef } from "@kie-tools/feel-input-component";
+import { FeelInput, FeelInputRef, SuggestionProvider } from "@kie-tools/feel-input-component";
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { NavigationKeysUtils } from "../../keysUtils/keyUtils";
@@ -53,6 +53,7 @@ export interface BeeTableEditableCellContentProps {
   onFeelTabKeyDown?: (args: { isShiftPressed: boolean }) => void;
   onFeelEnterKeyDown?: (args: { isShiftPressed: boolean }) => void;
   expressionId?: string;
+  suggestions?: string[];
 }
 
 export function BeeTableEditableCellContent({
@@ -65,6 +66,7 @@ export function BeeTableEditableCellContent({
   onFeelTabKeyDown,
   onFeelEnterKeyDown,
   expressionId,
+  suggestions,
 }: BeeTableEditableCellContentProps) {
   const [cellHeight, setCellHeight] = useState(CELL_LINE_HEIGHT * 3);
   const [preview, setPreview] = useState<string>(value);
@@ -75,6 +77,22 @@ export function BeeTableEditableCellContent({
   const mode = useMemo(() => {
     return isEditing && !isReadOnly ? Mode.Edit : Mode.Read;
   }, [isEditing, isReadOnly]);
+
+  const suggestionProvider = useMemo<SuggestionProvider | undefined>(() => {
+    if (!suggestions) {
+      return undefined;
+    }
+
+    return () =>
+      suggestions.map(
+        (suggestion) =>
+          ({
+            kind: Monaco.languages.CompletionItemKind.EnumMember,
+            label: suggestion,
+            insertText: `"${suggestion}"`,
+          } as Monaco.languages.CompletionItem)
+      );
+  }, [suggestions]);
 
   // FIXME: Tiago --> Temporary fix for the Boxed Expression Editor to work well. Ideally this wouldn't bee here, as the BeeTable should be decoupled from the DMN Editor's Boxed Expression Editor use-case.
   const { onRequestFeelIdentifiers } = useBoxedExpressionEditor();
@@ -223,6 +241,7 @@ export function BeeTableEditableCellContent({
           onBlur={onFeelBlur}
           feelIdentifiers={feelIdentifiers}
           expressionId={expressionId}
+          suggestionProvider={suggestionProvider}
         />
       </div>
     </>

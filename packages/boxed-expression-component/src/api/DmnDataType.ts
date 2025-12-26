@@ -22,4 +22,6 @@ export interface DmnDataType {
   name: string;
   /** Tells whether this data type is custom or built-in */
   isCustom: boolean;
+  /** A list of values for this data type. */
+  values?: string[];
 }
