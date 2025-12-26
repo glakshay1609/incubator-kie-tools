@@ -70,7 +70,7 @@ export function BeeTableDefaultCell<R extends object>({
 
   // FIXME: The BeeTable shouldn't know about DMN or GWT
   // The following useEffect shouldn't be placed here.
-  const { beeGwtService } = useBoxedExpressionEditor();
+  const { beeGwtService, dataTypes } = useBoxedExpressionEditor();
   useEffect(() => {
     if (isActive) {
       const column = cellProps.column.id;
@@ -78,6 +78,11 @@ export function BeeTableDefaultCell<R extends object>({
       beeGwtService?.selectObject(cell ? cell.id : "");
     }
   }, [beeGwtService, cellProps.column.id, cellProps.columns, cellProps.row.values, isActive]);
+
+  const suggestions = useMemo(
+    () => dataTypes.find((dataType) => dataType.name === cellProps.column.dataType)?.values,
+    [cellProps.column.dataType, dataTypes]
+  );
 
   return (
     <BeeTableEditableCellContent
@@ -90,6 +95,7 @@ export function BeeTableDefaultCell<R extends object>({
       onFeelEnterKeyDown={navigateVertically}
       onFeelTabKeyDown={navigateHorizontally}
       expressionId={typeof cellProps.value === "string" ? "" : cellProps.value?.id}
+      suggestions={suggestions}
     />
   );
 }

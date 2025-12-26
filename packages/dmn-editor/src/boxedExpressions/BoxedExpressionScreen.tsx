@@ -340,10 +340,16 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
   ////
 
   const dataTypes = useMemo<DmnDataType[]>(() => {
-    const customDataTypes = dataTypesTree.map((d) => ({
-      isCustom: true,
-      name: d.feelName,
-    }));
+    const customDataTypes = dataTypesTree.map((d) => {
+      const allowedValues = d.itemDefinition.allowedValues?.text?.__$$text;
+      return {
+        isCustom: true,
+        name: d.feelName,
+        values: allowedValues
+          ? allowedValues.split(",").map((v) => v.trim().replace(/^"|"$/g, ""))
+          : undefined,
+      };
+    });
 
     return [...builtInFeelTypes, ...customDataTypes];
   }, [dataTypesTree]);
