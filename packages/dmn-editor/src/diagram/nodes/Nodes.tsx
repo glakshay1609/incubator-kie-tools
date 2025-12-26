@@ -1531,6 +1531,8 @@ type NodeResizeHandleProps = {
 );
 
 export function NodeResizerHandle(props: NodeResizeHandleProps) {
+  const dmnEditorStoreApi = useDmnEditorStoreApi();
+
   const minSize =
     props.nodeType === NODE_TYPES.inputData
       ? MIN_NODE_SIZES[props.nodeType]({
@@ -1540,8 +1542,30 @@ export function NodeResizerHandle(props: NodeResizeHandleProps) {
       : MIN_NODE_SIZES[props.nodeType]({
           snapGrid: props.snapGrid,
         });
+
+  const onResizeStart = useCallback(
+    (event: any, params: any) => {
+      dmnEditorStoreApi.setState((state) => {
+        state.diagram.resizingNodeHandle = params.direction;
+      });
+    },
+    [dmnEditorStoreApi]
+  );
+
+  const onResizeEnd = useCallback(() => {
+    dmnEditorStoreApi.setState((state) => {
+      state.diagram.resizingNodeHandle = undefined;
+    });
+  }, [dmnEditorStoreApi]);
+
   return (
-    <RF.NodeResizeControl style={resizerControlStyle} minWidth={minSize["@_width"]} minHeight={minSize["@_height"]}>
+    <RF.NodeResizeControl
+      style={resizerControlStyle}
+      minWidth={minSize["@_width"]}
+      minHeight={minSize["@_height"]}
+      onResizeStart={onResizeStart}
+      onResizeEnd={onResizeEnd}
+    >
       <div
         data-testid={`kie-tools--dmn-editor--${props.nodeName}-resize-handle`}
         style={{

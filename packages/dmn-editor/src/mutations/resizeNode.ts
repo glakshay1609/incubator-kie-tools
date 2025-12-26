@@ -63,6 +63,7 @@ export function resizeNode({
     index: number;
     shapeIndex: number;
     dimension: { "@_width": number; "@_height": number };
+    position?: { "@_x": number; "@_y": number };
     sourceEdgeIndexes: number[];
     targetEdgeIndexes: number[];
   };
@@ -75,6 +76,11 @@ export function resizeNode({
   const shapeBounds = shape?.["dc:Bounds"];
   if (!shapeBounds) {
     throw new Error("DMN MUTATION: Cannot resize non-existent shape bounds");
+  }
+
+  if (change.position) {
+    shapeBounds["@_x"] = change.position["@_x"];
+    shapeBounds["@_y"] = change.position["@_y"];
   }
 
   const limit = { x: 0, y: 0 };
