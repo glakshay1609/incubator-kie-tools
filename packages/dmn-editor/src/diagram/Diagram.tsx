@@ -753,6 +753,32 @@ export const Diagram = React.forwardRef<DiagramRef, { container: React.RefObject
                     snappedShape.width !== change.dimensions.width ||
                     snappedShape.height !== change.dimensions.height
                   ) {
+                    const handle = state.diagram.resizingNodeHandle;
+                    const oldBounds = node.data.shape["dc:Bounds"]!;
+                    const newDimensions = {
+                      width: change.dimensions?.width ?? 0,
+                      height: change.dimensions?.height ?? 0,
+                    };
+
+                    const deltaWidth = newDimensions.width - oldBounds["@_width"];
+                    const deltaHeight = newDimensions.height - oldBounds["@_height"];
+
+                    let position: { "@_x": number; "@_y": number } | undefined = undefined;
+                    if (handle) {
+                      const [dx, dy] = handle;
+                      let newX = oldBounds["@_x"];
+                      let newY = oldBounds["@_y"];
+                      if (dx === -1) {
+                        newX = oldBounds["@_x"] - deltaWidth;
+                      }
+                      if (dy === -1) {
+                        newY = oldBounds["@_y"] - deltaHeight;
+                      }
+                      if (newX !== oldBounds["@_x"] || newY !== oldBounds["@_y"]) {
+                        position = { "@_x": newX, "@_y": newY };
+                      }
+                    }
+
                     resizeNode({
                       definitions: state.dmn.model.definitions,
                       drdIndex: state.computed(state).getDrdIndex(),
@@ -769,6 +795,7 @@ export const Diagram = React.forwardRef<DiagramRef, { container: React.RefObject
                         nodeType: node.type as NodeType,
                         index: node.data.index,
                         shapeIndex: node.data.shape.index,
+                        position,
                         sourceEdgeIndexes: state
                           .computed(state)
                           .getDiagramData(externalModelsByNamespace)
@@ -820,6 +847,11 @@ export const Diagram = React.forwardRef<DiagramRef, { container: React.RefObject
                 console.debug(`DMN DIAGRAM: 'onNodesChange' --> position '${change.id}'`);
                 state.dispatch(state).diagram.setNodeStatus(change.id, { dragging: change.dragging });
                 if (change.positionAbsolute) {
+                  // If we are resizing, the 'dimensions' case will handle the repositioning.
+                  if (state.diagram.resizingNodes.includes(change.id)) {
+                    break;
+                  }
+
                   const node = state
                     .computed(state)
                     .getDiagramData(externalModelsByNamespace)

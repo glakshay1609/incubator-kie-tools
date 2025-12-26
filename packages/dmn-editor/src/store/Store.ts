@@ -118,6 +118,7 @@ export interface State {
     _selectedEdges: Array<string>;
     draggingNodes: Array<string>;
     resizingNodes: Array<string>;
+    resizingNodeHandle: RF.ResizeControlVariant | undefined;
     draggingWaypoints: Array<string>;
     movingDividerLines: Array<string>;
     isEditingStyle: boolean;
@@ -237,6 +238,7 @@ export const defaultStaticState = (): Omit<State, "dmn" | "dispatch" | "computed
     _selectedEdges: [],
     draggingNodes: [],
     resizingNodes: [],
+    resizingNodeHandle: undefined,
     draggingWaypoints: [],
     movingDividerLines: [],
     isEditingStyle: false,
