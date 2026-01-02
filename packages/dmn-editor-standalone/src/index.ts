@@ -36,6 +36,7 @@ export function open(args: {
   initialFileNormalizedPosixPathRelativeToTheWorkspaceRoot?: string;
   readOnly?: boolean;
   origin?: string;
+  locale?: string;
   onError?: () => any;
   resources?: Map<string, DmnEditorStandaloneResource>;
 }): DmnEditorStandaloneApi {
@@ -97,7 +98,7 @@ export function open(args: {
       getFileContents: () => Promise.resolve(args.initialContent),
       isReadOnly: args.readOnly ?? false,
     },
-    "en-US",
+    args.locale ?? "en-US",
     {
       kogitoEditor_setContentError() {
         if (!receivedSetContentError) {
