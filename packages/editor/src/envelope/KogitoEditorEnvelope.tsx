@@ -98,6 +98,9 @@ export class KogitoEditorEnvelope<
     return new Promise<() => EditorEnvelopeViewApi<E>>((res) => {
       setTimeout(() => {
         ReactDOM.render(app, container, () => {
+          this.context.channelApi.requests.kogitoI18n_getLocale().then((locale) => {
+            editorEnvelopeViewRef.current?.setLocale(locale);
+          });
           res(() => editorEnvelopeViewRef.current!);
         });
       }, 0);
