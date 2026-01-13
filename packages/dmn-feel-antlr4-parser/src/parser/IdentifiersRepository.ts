@@ -404,7 +404,87 @@ export class IdentifiersRepository {
   }
 
   public getTypeRef(typeRef: string | undefined) {
-    return this.dataTypes.has(typeRef ?? "") ? this.dataTypes.get(typeRef ?? "") : typeRef;
+    if (!typeRef) {
+      return undefined;
+    }
+
+    const foundType = this.findType(typeRef);
+    return foundType ? foundType : typeRef;
+  }
+
+  private findType(name: string): DataType | undefined {
+    // 1. Check for a direct match in the main data types and imported ones.
+    let result = this.dataTypes.get(name);
+    if (result) {
+      return result;
+    }
+
+    for (const imported of this.importedDataTypes.values()) {
+      const found = imported.find((dt) => dt.name === name);
+      if (found) {
+        return found;
+      }
+    }
+
+    // 2. Handle dot notation for nested types
+    const nameParts = name.split(".");
+    if (nameParts.length > 1) {
+      // Find the root type
+      let rootType = this.dataTypes.get(nameParts[0]);
+      if (!rootType) {
+        for (const imported of this.importedDataTypes.values()) {
+          const found = imported.find((dt) => dt.name === nameParts[0]);
+          if (found) {
+            rootType = found;
+            break;
+          }
+        }
+      }
+
+      if (rootType) {
+        let currentType: DataType | undefined = rootType;
+        for (let i = 1; i < nameParts.length; i++) {
+          if (!currentType) {
+            break;
+          }
+          currentType = currentType.properties.get(nameParts[i]);
+        }
+        if (currentType) {
+          return currentType;
+        }
+      }
+    }
+
+    // 3. Fallback to recursive search in all properties of all types
+    for (const dt of this.dataTypes.values()) {
+      const found = this.findNestedType(name, dt);
+      if (found) {
+        return found;
+      }
+    }
+    for (const imported of this.importedDataTypes.values()) {
+      for (const dt of imported) {
+        const found = this.findNestedType(name, dt);
+        if (found) {
+          return found;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  private findNestedType(name: string, type: DataType): DataType | undefined {
+    if (type.properties.has(name)) {
+      return type.properties.get(name);
+    }
+    for (const prop of type.properties.values()) {
+      const nested = this.findNestedType(name, prop);
+      if (nested) {
+        return nested;
+      }
+    }
+    return undefined;
   }
 
   private createDataType(itemDefinition: DmnItemDefinition) {
