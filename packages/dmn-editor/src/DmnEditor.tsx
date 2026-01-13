@@ -261,32 +261,29 @@ export const DmnEditorInternal = ({
         const state = dmnEditorStoreApi.getState();
 
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.setAttribute("width", bounds.width + SVG_PADDING * 2 + "");
-        svg.setAttribute(
-          "height",
-          // It's not possible to calculate the text height which is outside of the node
-          // for the alternative input data shape
-          bounds.height + (state.computed(state).isAlternativeInputDataShape() ? SVG_PADDING * 5 : SVG_PADDING * 2) + ""
-        );
+        const width = bounds.width + SVG_PADDING * 2;
+        const height =
+          bounds.height + (state.computed(state).isAlternativeInputDataShape() ? SVG_PADDING * 5 : SVG_PADDING * 2);
+
+        svg.setAttribute("width", `${width}`);
+        svg.setAttribute("height", `${height}`);
+        svg.setAttribute("viewBox", `${bounds.x - SVG_PADDING} ${bounds.y - SVG_PADDING} ${width} ${height}`);
 
         // We're still on React 17.
         // eslint-disable-next-line react/no-deprecated
         ReactDOM.render(
-          // Indepdent of where the nodes are located, they'll always be rendered at the top-left corner of the SVG
-          <g transform={`translate(${-bounds.x + SVG_PADDING} ${-bounds.y + SVG_PADDING})`}>
-            <DmnDiagramSvg
-              nodes={nodes}
-              edges={edges}
-              snapGrid={state.diagram.snapGrid}
-              importsByNamespace={state.computed(state).importsByNamespace()}
-              thisDmn={state.dmn}
-              isAlternativeInputDataShape={state.computed(state).isAlternativeInputDataShape()}
-              allDataTypesById={state.computed(state).getDataTypes(externalModelsByNamespace).allDataTypesById}
-              allTopLevelItemDefinitionUniqueNames={
-                state.computed(state).getDataTypes(externalModelsByNamespace).allTopLevelItemDefinitionUniqueNames
-              }
-            />
-          </g>,
+          <DmnDiagramSvg
+            nodes={nodes}
+            edges={edges}
+            snapGrid={state.diagram.snapGrid}
+            importsByNamespace={state.computed(state).importsByNamespace()}
+            thisDmn={state.dmn}
+            isAlternativeInputDataShape={state.computed(state).isAlternativeInputDataShape()}
+            allDataTypesById={state.computed(state).getDataTypes(externalModelsByNamespace).allDataTypesById}
+            allTopLevelItemDefinitionUniqueNames={
+              state.computed(state).getDataTypes(externalModelsByNamespace).allTopLevelItemDefinitionUniqueNames
+            }
+          />,
           svg
         );
 
