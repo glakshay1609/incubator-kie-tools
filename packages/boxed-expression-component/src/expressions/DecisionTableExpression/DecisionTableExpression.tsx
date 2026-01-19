@@ -33,7 +33,7 @@ import {
   getNextAvailablePrefixedName,
   Normalized,
 } from "../../api";
-import { useBoxedExpressionEditorI18n } from "../../i18n";
+import { BoxedExpressionEditorI18n, useBoxedExpressionEditorI18n } from "../../i18n";
 import { usePublishedBeeTableResizableColumns } from "../../resizing/BeeTableResizableColumnsContext";
 import { useApportionedColumnWidthsIfNestedTable, useNestedTableLastColumnMinWidth } from "../../resizing/Hooks";
 import { ResizerStopBehavior } from "../../resizing/ResizingWidthsContext";
@@ -72,7 +72,13 @@ import "./DecisionTableExpression.css";
 import { Unpacked } from "../../tsExt/tsExt";
 
 type ROWTYPE = any; // FIXME: https://github.com/apache/incubator-kie-issues/issues/169
+type Change = {
+  path: string; // e.g., "rule[0].inputEntry[0].text.__$$text"
+  before: any;
+  after: any;
+};
 
+type ChangeMap = Map<string, Change[]>;
 enum DecisionTableColumnType {
   InputClause = "input",
   OutputClause = "output",
@@ -102,7 +108,7 @@ function createAnnotationEntry(): Unpacked<Normalized<DMN_LATEST__tDecisionRule[
   };
 }
 
-const createDefaultRule = (): Normalized<DMN_LATEST__tDecisionRule> => {
+const createDefaultRule = (i18n: BoxedExpressionEditorI18n): Normalized<DMN_LATEST__tDecisionRule> => {
   const defaultRowToAdd: Normalized<DMN_LATEST__tDecisionRule> = {
     "@_id": generateUuid(),
     inputEntry: [
@@ -117,7 +123,7 @@ const createDefaultRule = (): Normalized<DMN_LATEST__tDecisionRule> => {
         text: { __$$text: "" },
       },
     ],
-    annotationEntry: [{ text: { __$$text: "// Your annotations here" } }],
+    annotationEntry: [{ text: { __$$text: i18n.yourAnnotationsHere } }],
   };
   return defaultRowToAdd;
 };
@@ -125,9 +131,11 @@ const createDefaultRule = (): Normalized<DMN_LATEST__tDecisionRule> => {
 export function DecisionTableExpression({
   isNested,
   expression: decisionTableExpression,
+  diffsById,
 }: {
   expression: BoxedDecisionTable;
   isNested: boolean;
+  diffsById?: Map<string, ChangeMap> | undefined;
 }) {
   const { i18n } = useBoxedExpressionEditorI18n();
   const { expressionHolderId, widthsById, isReadOnly } = useBoxedExpressionEditor();
@@ -357,38 +365,70 @@ export function DecisionTableExpression({
 
   const beeTableColumns = useMemo<ReactTable.Column<ROWTYPE>[]>(() => {
     const inputColumns: ReactTable.Column<ROWTYPE>[] = (decisionTableExpression.input ?? []).map(
-      (inputClause, inputIndex) => ({
-        accessor: inputClause["@_id"] ?? generateUuid(),
-        label: inputClause.inputExpression.text?.__$$text ?? "",
-        id: inputClause["@_id"]!,
-        dataType: inputClause.inputExpression["@_typeRef"] ?? DmnBuiltInDataType.Undefined,
-        width: getInputWidth(inputIndex, widths)?.width ?? DECISION_TABLE_INPUT_MIN_WIDTH,
-        setWidth: setInputColumnWidth(inputIndex),
-        minWidth: DECISION_TABLE_INPUT_MIN_WIDTH,
-        groupType: DecisionTableColumnType.InputClause,
-        isRowIndexColumn: false,
-        isHeaderAFeelExpression: true,
-      })
+      (inputClause, inputIndex) => {
+        const cellIds = (decisionTableExpression.rule ?? [])
+          .map((rule) => rule.inputEntry?.[inputIndex]?.["@_id"])
+          .filter((id) => id) as string[];
+
+        const diffStatuses = cellIds.map((id) => cellDiffMap.get(id));
+
+        let columnDiffStatus: "added" | "deleted" | undefined = undefined;
+        if (diffStatuses.length > 0 && diffStatuses.every((s) => s === "added")) {
+          columnDiffStatus = "added";
+        } else if (diffStatuses.length > 0 && diffStatuses.every((s) => s === "deleted")) {
+          columnDiffStatus = "deleted";
+        }
+
+        return {
+          accessor: inputClause["@_id"] ?? generateUuid(),
+          label: inputClause.inputExpression.text?.__$$text ?? "",
+          id: inputClause["@_id"]!,
+          dataType: inputClause.inputExpression["@_typeRef"] ?? DmnBuiltInDataType.Undefined,
+          width: getInputWidth(inputIndex, widths)?.width ?? DECISION_TABLE_INPUT_MIN_WIDTH,
+          setWidth: setInputColumnWidth(inputIndex),
+          minWidth: DECISION_TABLE_INPUT_MIN_WIDTH,
+          groupType: DecisionTableColumnType.InputClause,
+          isRowIndexColumn: false,
+          isHeaderAFeelExpression: true,
+          diffStatus: columnDiffStatus,
+        };
+      }
     );
 
     const outputColumns: ReactTable.Column<ROWTYPE>[] = (decisionTableExpression.output ?? []).map(
-      (outputClause, outputIndex) => ({
-        accessor: outputClause["@_id"] ?? generateUuid(),
-        id: outputClause["@_id"],
-        label:
-          decisionTableExpression.output?.length == 1
-            ? decisionTableExpression["@_label"] ?? DEFAULT_EXPRESSION_VARIABLE_NAME
-            : outputClause["@_name"] ?? outputClause["@_label"] ?? DEFAULT_EXPRESSION_VARIABLE_NAME,
-        dataType:
-          decisionTableExpression.output?.length == 1
-            ? decisionTableExpression["@_typeRef"] ?? DmnBuiltInDataType.Undefined
-            : outputClause["@_typeRef"] ?? DmnBuiltInDataType.Undefined,
-        width: getOutputWidth(outputIndex, widths)?.width ?? DECISION_TABLE_OUTPUT_MIN_WIDTH,
-        setWidth: setOutputColumnWidth(outputIndex),
-        minWidth: DECISION_TABLE_OUTPUT_MIN_WIDTH,
-        groupType: DecisionTableColumnType.OutputClause,
-        isRowIndexColumn: false,
-      })
+      (outputClause, outputIndex) => {
+        const cellIds = (decisionTableExpression.rule ?? [])
+          .map((rule) => rule.outputEntry?.[outputIndex]?.["@_id"])
+          .filter((id) => id) as string[];
+
+        const diffStatuses = cellIds.map((id) => cellDiffMap.get(id));
+
+        let columnDiffStatus: "added" | "deleted" | undefined = undefined;
+        if (diffStatuses.length > 0 && diffStatuses.every((s) => s === "added")) {
+          columnDiffStatus = "added";
+        } else if (diffStatuses.length > 0 && diffStatuses.every((s) => s === "deleted")) {
+          columnDiffStatus = "deleted";
+        }
+
+        return {
+          accessor: outputClause["@_id"] ?? generateUuid(),
+          id: outputClause["@_id"],
+          label:
+            decisionTableExpression.output?.length == 1
+              ? decisionTableExpression["@_label"] ?? DEFAULT_EXPRESSION_VARIABLE_NAME
+              : outputClause["@_name"] ?? outputClause["@_label"] ?? DEFAULT_EXPRESSION_VARIABLE_NAME,
+          dataType:
+            decisionTableExpression.output?.length == 1
+              ? decisionTableExpression["@_typeRef"] ?? DmnBuiltInDataType.Undefined
+              : outputClause["@_typeRef"] ?? DmnBuiltInDataType.Undefined,
+          width: getOutputWidth(outputIndex, widths)?.width ?? DECISION_TABLE_OUTPUT_MIN_WIDTH,
+          setWidth: setOutputColumnWidth(outputIndex),
+          minWidth: DECISION_TABLE_OUTPUT_MIN_WIDTH,
+          groupType: DecisionTableColumnType.OutputClause,
+          isRowIndexColumn: false,
+          diffStatus: columnDiffStatus,
+        };
+      }
     );
 
     const outputGroup = {
@@ -437,30 +477,217 @@ export function DecisionTableExpression({
     widths,
   ]);
 
+  const { cellDiffMap, entryDetails } = useMemo(() => {
+    const changeMap = diffsById?.get(id);
+    const changes: Change[] = changeMap ? Array.from(changeMap.values()).flat() : [];
+
+    // Create a map to store cell highlighting information
+    const cellDiffMap = new Map<string, "added" | "updated" | "deleted">();
+
+    // Get detailed entry information
+    const entryDetails = changes
+      .filter(
+        (change) =>
+          change.path.includes("inputEntry") ||
+          change.path.includes("outputEntry") ||
+          change.path.includes("annotationEntry")
+      )
+      .map((change) => {
+        const ruleMatch = change.path.match(/\.rule\[([^\]]+)\]/);
+        const inputEntryMatch = change.path.match(/\.inputEntry\[([^\]]+)\]/);
+        const outputEntryMatch = change.path.match(/\.outputEntry\[([^\]]+)\]/);
+
+        const ruleId = ruleMatch?.[1];
+        const entryId = inputEntryMatch?.[1] || outputEntryMatch?.[1];
+
+        const rule = decisionTableExpression.rule?.find((r) => r["@_id"] === ruleId);
+        const entry = inputEntryMatch
+          ? rule?.inputEntry?.find((e) => e["@_id"] === entryId)
+          : rule?.outputEntry?.find((e) => e["@_id"] === entryId);
+
+        return {
+          ruleId,
+          entryId,
+          entry,
+          text: entry?.text?.__$$text,
+          change,
+        };
+      });
+    // Process each change to determine cell highlighting
+    for (const change of changes) {
+      // Handle cell-level changes (inputEntry, outputEntry, annotationEntry)
+      if (
+        change.path.includes("inputEntry") ||
+        change.path.includes("outputEntry") ||
+        change.path.includes("annotationEntry")
+      ) {
+        // Handle text changes (leaf nodes)
+        if (change.path.includes(".__$$text")) {
+          // Extract the entry ID from the path for text changes
+          const pathParts = change.path.split(".");
+          const entryPart = pathParts.find((part) => part.includes("Entry[") && part.includes("]"));
+          if (entryPart) {
+            const entryId = entryPart.match(/\[([^\]]+)\]/)?.[1];
+            if (entryId) {
+              cellDiffMap.set(
+                entryId,
+                change.before === undefined ? "added" : change.after === undefined ? "deleted" : "updated"
+              );
+            }
+          }
+        }
+
+        // Handle entry object changes (when entire entries are added/removed)
+        else {
+          if (Array.isArray(change.before)) {
+            change.before.forEach((entry: any) => {
+              if (entry?.["@_id"]) {
+                cellDiffMap.set(entry["@_id"], "deleted");
+              }
+            });
+          } else if (change.before?.["@_id"]) {
+            cellDiffMap.set(change.before["@_id"], "deleted");
+          }
+
+          if (Array.isArray(change.after)) {
+            change.after.forEach((entry: any) => {
+              if (entry?.["@_id"]) {
+                cellDiffMap.set(entry["@_id"], "added");
+              }
+            });
+          } else if (change.after?.["@_id"]) {
+            cellDiffMap.set(change.after["@_id"], "added");
+          }
+        }
+      }
+
+      // Handle rule-level changes (entire rows)
+      else if (change.path.includes(".rule[") && !change.path.includes("Entry")) {
+        if (change.before?.["@_id"]) {
+          // Mark all cells in the deleted row
+          const rule = change.before;
+          [...(rule.inputEntry || []), ...(rule.outputEntry || []), ...(rule.annotationEntry || [])].forEach(
+            (entry: any) => {
+              if (entry?.["@_id"]) {
+                cellDiffMap.set(entry["@_id"], "deleted");
+              }
+            }
+          );
+        }
+
+        if (change.after?.["@_id"]) {
+          // Mark all cells in the added row
+          const rule = change.after;
+          [...(rule.inputEntry || []), ...(rule.outputEntry || []), ...(rule.annotationEntry || [])].forEach(
+            (entry: any) => {
+              if (entry?.["@_id"]) {
+                cellDiffMap.set(entry["@_id"], "added");
+              }
+            }
+          );
+        }
+      }
+    }
+
+    return { cellDiffMap, entryDetails };
+  }, [diffsById, id, decisionTableExpression.rule]);
+
   const beeTableRows = useMemo(() => {
-    const mapRuleToRow = (rule: Normalized<DMN_LATEST__tDecisionRule>) => {
+    const mappedRows = (decisionTableExpression.rule ?? []).map((rule) => {
       const ruleRow = [
         ...(rule.inputEntry ?? []),
         ...(rule.outputEntry ?? new Array(decisionTableExpression.output.length)),
         ...(rule.annotationEntry ?? []),
       ];
 
-      return getColumnsAtLastLevel(beeTableColumns).reduce(
+      const rowData = getColumnsAtLastLevel(beeTableColumns).reduce(
         (tableRow: ROWTYPE, column, columnIndex) => {
+          const cell = ruleRow[columnIndex] as DMN_LATEST__tUnaryTests & DMN_LATEST__tLiteralExpression;
+          const cellKey = cell?.["@_id"] ?? column.accessor;
+          const diffInfo = cellDiffMap.get(cellKey) == "updated" ? "updated" : cellDiffMap.get(cellKey); // Only show "updated" if it's not also "added" or "deleted"
+          const exprDiffMap = diffsById?.get(id);
+          const decisionDiff = exprDiffMap?.get(id) ?? [];
+
+          const decisionTextDiff = entryDetails.find(
+            (detail) => detail.entryId === cellKey && detail.change.path.includes(".__$$text")
+          )?.change;
+          const content = cell?.text?.__$$text ?? "";
+          const diffContent = content === decisionTextDiff?.before ? decisionTextDiff?.after : decisionTextDiff?.before;
           tableRow[column.accessor] = {
-            id: (ruleRow[columnIndex] as DMN_LATEST__tUnaryTests & DMN_LATEST__tLiteralExpression)?.["@_id"] ?? "",
-            content: ruleRow[columnIndex]?.text?.__$$text ?? "",
+            id: cellKey,
+            content: content,
+            diffStatus: diffInfo,
+            diffContent: diffContent,
           };
           return tableRow;
         },
         { id: rule["@_id"] }
       );
-    };
+
+      return rowData;
+    });
+
+    // Add diff status to rows
+    const rowsWithDiffStatus = mappedRows.map((row) => {
+      const cellStatuses = Object.values(row)
+        .filter((cell: any) => cell && cell.diffStatus)
+        .map((cell: any) => cell.diffStatus);
+
+      let rowDiffStatus: "added" | "deleted" | undefined = undefined;
+      if (cellStatuses.length > 0 && cellStatuses.every((s) => s === "added")) {
+        rowDiffStatus = "added";
+      } else if (cellStatuses.length > 0 && cellStatuses.every((s) => s === "deleted")) {
+        rowDiffStatus = "deleted";
+      }
+
+      return { ...row, diffStatus: rowDiffStatus };
+    });
+
     if (!decisionTableExpression.rule || decisionTableExpression.rule.length === 0) {
-      return [mapRuleToRow(createDefaultRule())];
+      const newRule = createDefaultRule(i18n);
+      const ruleRow = [
+        ...(newRule.inputEntry ?? []),
+        ...(newRule.outputEntry ?? new Array(decisionTableExpression.output.length)),
+        ...(newRule.annotationEntry ?? []),
+      ];
+      return [
+        getColumnsAtLastLevel(beeTableColumns).reduce(
+          (tableRow: ROWTYPE, column, columnIndex) => {
+            const cell = ruleRow[columnIndex] as DMN_LATEST__tUnaryTests & DMN_LATEST__tLiteralExpression;
+            const cellKey = cell?.["@_id"] ?? column.accessor;
+            const diffInfo = cellDiffMap.get(cellKey) == "updated" ? "updated" : cellDiffMap.get(cellKey); // Only show "updated" if it's not also "added" or "deleted"
+            const exprDiffMap = diffsById?.get(id);
+            const decisionDiff = exprDiffMap?.get(id) ?? [];
+            const decisionTextDiff = entryDetails.find(
+              (detail) => detail.entryId === cellKey && detail.change.path.includes(".__$$text")
+            )?.change;
+            const content = cell?.text?.__$$text ?? "";
+            const diffContent =
+              content === decisionTextDiff?.before ? decisionTextDiff?.after : decisionTextDiff?.before;
+            tableRow[column.accessor] = {
+              id: cellKey,
+              content: content,
+              diffStatus: diffInfo,
+              diffContent: diffContent,
+            };
+            return tableRow;
+          },
+          { id: newRule["@_id"] }
+        ),
+      ];
     }
-    return decisionTableExpression.rule.map(mapRuleToRow);
-  }, [decisionTableExpression.rule, decisionTableExpression.output.length, beeTableColumns]);
+
+    return rowsWithDiffStatus;
+  }, [
+    decisionTableExpression.rule,
+    decisionTableExpression.output.length,
+    beeTableColumns,
+    cellDiffMap,
+    diffsById,
+    entryDetails,
+    id,
+    i18n,
+  ]);
 
   const onCellUpdates = useCallback(
     (cellUpdates: BeeTableCellUpdate<ROWTYPE>[]) => {
@@ -468,7 +695,7 @@ export function DecisionTableExpression({
         setExpressionAction: (prev: Normalized<BoxedDecisionTable>) => {
           let previousExpression: Normalized<BoxedDecisionTable> = { ...prev };
           if (!previousExpression.rule || previousExpression.rule.length === 0) {
-            previousExpression.rule = [createDefaultRule()];
+            previousExpression.rule = [createDefaultRule(i18n)];
           }
           cellUpdates.forEach((cellUpdate) => {
             const newRules = [...(previousExpression.rule ?? [])];
@@ -528,7 +755,7 @@ export function DecisionTableExpression({
         expressionChangedArgs: { action: Action.DecisionTableCellsUpdated },
       });
     },
-    [setExpression]
+    [i18n, setExpression]
   );
 
   const getExpressionChangedArgsFromColumnUpdates = useCallback(
@@ -746,7 +973,7 @@ export function DecisionTableExpression({
         setExpressionAction: (prev: Normalized<BoxedDecisionTable>) => {
           let newRules = [...(prev.rule ?? [])];
           if (newRules.length === 0) {
-            newRules = [createDefaultRule()];
+            newRules = [createDefaultRule(i18n)];
           }
 
           const newItems: Normalized<DMN_LATEST__tDecisionRule>[] = [];
@@ -780,7 +1007,7 @@ export function DecisionTableExpression({
         expressionChangedArgs: { action: Action.RowsAdded, rowIndex: args.beforeIndex, rowsCount: args.rowsCount },
       });
     },
-    [setExpression]
+    [i18n, setExpression]
   );
 
   const getLocalIndexInsideGroupType = useCallback(
@@ -955,8 +1182,8 @@ export function DecisionTableExpression({
           args.groupType === DecisionTableColumnType.InputClause
             ? DECISION_TABLE_INPUT_DEFAULT_WIDTH
             : args.groupType === DecisionTableColumnType.OutputClause
-              ? DECISION_TABLE_OUTPUT_DEFAULT_WIDTH
-              : DECISION_TABLE_ANNOTATION_DEFAULT_WIDTH;
+            ? DECISION_TABLE_OUTPUT_DEFAULT_WIDTH
+            : DECISION_TABLE_ANNOTATION_DEFAULT_WIDTH;
 
         const nextValues = [...prev];
         const minValuesLength = args.beforeIndex + args.columnsCount;
