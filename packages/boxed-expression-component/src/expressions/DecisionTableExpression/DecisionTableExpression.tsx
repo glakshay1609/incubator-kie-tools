@@ -643,9 +643,8 @@ export function DecisionTableExpression({
 
     // Add diff status to rows
     const rowsWithDiffStatus = mappedRows.map((row) => {
-      const cellStatuses = Object.values(row)
-        .filter((cell: any) => cell && cell.diffStatus)
-        .map((cell: any) => cell.diffStatus);
+      const columns = getColumnsAtLastLevel(beeTableColumns);
+      const cellStatuses = columns.map((c) => row[c.accessor]?.diffStatus);
 
       let rowDiffStatus: "added" | "deleted" | undefined = undefined;
       if (cellStatuses.length > 0 && cellStatuses.every((s) => s === "added")) {
