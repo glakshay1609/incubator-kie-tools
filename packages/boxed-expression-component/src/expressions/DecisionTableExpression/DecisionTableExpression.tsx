@@ -363,6 +363,43 @@ export function DecisionTableExpression({
 
   /// //////////////////////////////////////////////////////
 
+  const { cellDiffMap, entryDetails } = useMemo(() => {
+    const changeMap = diffsById?.get(id);
+    const changes: Change[] = changeMap ? Array.from(changeMap.values()).flat() : [];
+
+    // Create a map to store cell highlighting information
+    const cellDiffMap = new Map<string, "added" | "updated" | "deleted">();
+
+    // Get detailed entry information
+    const entryDetails = changes
+      .filter(
+        (change) =>
+          change.path.includes("inputEntry") ||
+          change.path.includes("outputEntry") ||
+          change.path.includes("annotationEntry")
+      )
+      .map((change) => {
+        const ruleMatch = change.path.match(/\.rule\[([^\]]+)\]/);
+        const inputEntryMatch = change.path.match(/\.inputEntry\[([^\]]+)\]/);
+        const outputEntryMatch = change.path.match(/\.outputEntry\[([^\]]+)\]/);
+
+        const ruleId = ruleMatch?.[1];
+        const entryId = inputEntryMatch?.[1] || outputEntryMatch?.[1];
+
+        const rule = decisionTableExpression.rule?.find((r) => r["@_id"] === ruleId);
+        const entry = inputEntryMatch
+          ? rule?.inputEntry?.find((e) => e["@_id"] === entryId)
+          : rule?.outputEntry?.find((e) => e["@_id"] === entryId);
+
+        return {
+          ruleId,
+          entryId,
+          entry,
+          text: entry?.text?.__$$text,
+          change,
+        };
+      });
+
   const beeTableColumns = useMemo<ReactTable.Column<ROWTYPE>[]>(() => {
     const inputColumns: ReactTable.Column<ROWTYPE>[] = (decisionTableExpression.input ?? []).map(
       (inputClause, inputIndex) => {
@@ -445,6 +482,19 @@ export function DecisionTableExpression({
     const annotationColumns: ReactTable.Column<ROWTYPE>[] = (decisionTableExpression.annotation ?? []).map(
       (annotation, annotationIndex) => {
         const annotationId = generateUuid();
+        const cellIds = (decisionTableExpression.rule ?? [])
+          .map((rule) => rule.annotationEntry?.[annotationIndex]?.["@_id"])
+          .filter((id) => id) as string[];
+
+        const diffStatuses = cellIds.map((id) => cellDiffMap.get(id));
+
+        let columnDiffStatus: "added" | "deleted" | undefined = undefined;
+        if (diffStatuses.length > 0 && diffStatuses.every((s) => s === "added")) {
+          columnDiffStatus = "added";
+        } else if (diffStatuses.length > 0 && diffStatuses.every((s) => s === "deleted")) {
+          columnDiffStatus = "deleted";
+        }
+
         return {
           accessor: annotationId,
           id: annotationId,
@@ -456,6 +506,7 @@ export function DecisionTableExpression({
           groupType: DecisionTableColumnType.Annotation,
           isRowIndexColumn: false,
           dataType: undefined!,
+          diffStatus: columnDiffStatus,
         };
       }
     );
@@ -476,43 +527,6 @@ export function DecisionTableExpression({
     setOutputColumnWidth,
     widths,
   ]);
-
-  const { cellDiffMap, entryDetails } = useMemo(() => {
-    const changeMap = diffsById?.get(id);
-    const changes: Change[] = changeMap ? Array.from(changeMap.values()).flat() : [];
-
-    // Create a map to store cell highlighting information
-    const cellDiffMap = new Map<string, "added" | "updated" | "deleted">();
-
-    // Get detailed entry information
-    const entryDetails = changes
-      .filter(
-        (change) =>
-          change.path.includes("inputEntry") ||
-          change.path.includes("outputEntry") ||
-          change.path.includes("annotationEntry")
-      )
-      .map((change) => {
-        const ruleMatch = change.path.match(/\.rule\[([^\]]+)\]/);
-        const inputEntryMatch = change.path.match(/\.inputEntry\[([^\]]+)\]/);
-        const outputEntryMatch = change.path.match(/\.outputEntry\[([^\]]+)\]/);
-
-        const ruleId = ruleMatch?.[1];
-        const entryId = inputEntryMatch?.[1] || outputEntryMatch?.[1];
-
-        const rule = decisionTableExpression.rule?.find((r) => r["@_id"] === ruleId);
-        const entry = inputEntryMatch
-          ? rule?.inputEntry?.find((e) => e["@_id"] === entryId)
-          : rule?.outputEntry?.find((e) => e["@_id"] === entryId);
-
-        return {
-          ruleId,
-          entryId,
-          entry,
-          text: entry?.text?.__$$text,
-          change,
-        };
-      });
     // Process each change to determine cell highlighting
     for (const change of changes) {
       // Handle cell-level changes (inputEntry, outputEntry, annotationEntry)
