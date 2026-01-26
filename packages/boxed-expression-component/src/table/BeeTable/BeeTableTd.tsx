@@ -34,6 +34,7 @@ import {
 import { useBoxedExpressionEditor } from "../../BoxedExpressionEditorContext";
 import { InsertRowColumnsDirection } from "../../api";
 import { Icon } from "@patternfly/react-core/dist/js/components/Icon";
+import { PlusCircleIcon, TimesCircleIcon } from "@patternfly/react-icons";
 
 export interface BeeTableTdProps<R extends object> {
   // Individual cells are not immutable references, By referencing the row, we avoid multiple re-renders and bugs.
@@ -54,6 +55,7 @@ export interface BeeTableTdProps<R extends object> {
   canDisplayEvaluationHitsCountBadge?: boolean;
   /** Actuall evaluation hits count number that will be displayed in the table cell if 'canDisplayEvaluationHitsCountBadge' is set to true. */
   evaluationHitsCount?: number;
+  diffStatus?: "added" | "deleted";
 }
 
 export type HoverInfo =
@@ -80,6 +82,7 @@ export function BeeTableTd<R extends object>({
   isReadOnly,
   canDisplayEvaluationHitsCountBadge,
   evaluationHitsCount,
+  diffStatus,
 }: BeeTableTdProps<R>) {
   const [isResizing, setResizing] = useState(false);
   const [hoverInfo, setHoverInfo] = useState<HoverInfo>({ isHovered: false });
@@ -258,8 +261,11 @@ export function BeeTableTd<R extends object>({
           width: column.width ? resizingWidth?.value : "100%",
           minWidth: column.width ? resizingWidth?.value : "100%",
           maxWidth: column.width ? resizingWidth?.value : "100%",
+          position: "relative",
         }}
       >
+        {diffStatus === "added" && column.isRowIndexColumn && <PlusCircleIcon className="diff-status-icon" />}
+        {diffStatus === "deleted" && column.isRowIndexColumn && <TimesCircleIcon className="diff-status-icon" />}
         {column.isRowIndexColumn ? (
           <div className={evaluationHitsCountBadgeClassName} data-evaluation-hits-count={evaluationHitsCount}>
             {rowIndexLabel}

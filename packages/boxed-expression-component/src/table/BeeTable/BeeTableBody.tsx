@@ -26,6 +26,7 @@ import { BeeTableTd } from "./BeeTableTd";
 import { BeeTableCoordinatesContextProvider } from "../../selection/BeeTableSelectionContext";
 import { ResizerStopBehavior } from "../../resizing/ResizingWidthsContext";
 import { useBoxedExpressionEditor } from "../../BoxedExpressionEditorContext";
+import { PlusCircleIcon, TimesCircleIcon } from "@patternfly/react-icons";
 
 export interface BeeTableBodyProps<R extends object> {
   /** Table instance */
@@ -128,6 +129,7 @@ export function BeeTableBody<R extends object>({
                     isReadOnly={isReadOnly}
                     canDisplayEvaluationHitsCountBadge={canDisplayEvaluationHitsCountBadge}
                     evaluationHitsCount={rowEvaluationHitsCount}
+                    diffStatus={(row.original as any).diffStatus}
                   />
                 )}
               </React.Fragment>

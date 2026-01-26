@@ -52,20 +52,65 @@ import "./RelationExpression.css";
 type ROWTYPE = any; // FIXME: https://github.com/kiegroup/kie-issues/issues/169
 
 export const RELATION_EXPRESSION_DEFAULT_VALUE = "";
+type Change = {
+  path: string; // e.g., "rule[0].inputEntry[0].text.__$$text"
+  before: any;
+  after: any;
+};
 
+type ChangeMap = Map<string, Change[]>;
 export function RelationExpression({
   isNested,
   expression: relationExpression,
+  diffsById,
 }: {
   expression: BoxedRelation;
   isNested: boolean;
   parentElementId: string;
+  diffsById?: Map<string, ChangeMap> | undefined;
 }) {
   const { i18n } = useBoxedExpressionEditorI18n();
   const { widthsById, expressionHolderId, isReadOnly } = useBoxedExpressionEditor();
   const { setExpression, setWidthsById } = useBoxedExpressionEditorDispatch();
 
   const id = relationExpression["@_id"]!;
+
+  const { cellDiffMap } = useMemo(() => {
+    const changeMap = diffsById?.get(id);
+    const changes: Change[] = changeMap ? Array.from(changeMap.values()).flat() : [];
+    const cellDiffMap = new Map<string, "added" | "updated" | "deleted">();
+
+    for (const change of changes) {
+      if (change.path.includes("column")) {
+        const columnMatch = change.path.match(/column\[([^\]]+)\]/);
+        const columnId = columnMatch ? columnMatch[1] : undefined;
+        if (columnId) {
+          const status = change.before === undefined ? "added" : change.after === undefined ? "deleted" : "updated";
+          cellDiffMap.set(columnId, status);
+        }
+      } else if (change.path.includes("row")) {
+        const rowMatch = change.path.match(/row\[([^\]]+)\]/);
+        const rowId = rowMatch ? rowMatch[1] : undefined;
+        if (rowId) {
+          const status = change.before === undefined ? "added" : change.after === undefined ? "deleted" : "updated";
+          cellDiffMap.set(rowId, status);
+        }
+      } else if (change.path.includes("expression")) {
+        const expressionMatch = change.path.match(/expression\[([^\]]+)\]/);
+        const exprId = expressionMatch ? expressionMatch[1] : undefined;
+        if (exprId) {
+          if (change.path.includes(".__$$text")) {
+            cellDiffMap.set(exprId, "updated");
+          } else {
+            const status = change.before === undefined ? "added" : change.after === undefined ? "deleted" : "updated";
+            cellDiffMap.set(exprId, status);
+          }
+        }
+      }
+    }
+
+    return { cellDiffMap };
+  }, [diffsById, id]);
 
   const beeTableOperationConfig = useMemo<BeeTableOperationConfig>(
     () => [
@@ -167,43 +212,80 @@ export function RelationExpression({
   const beeTableColumns = useMemo<ReactTable.Column<ROWTYPE>[]>(() => {
     return [
       {
-        accessor: expressionHolderId as any, // FIXME: https://github.com/apache/incubator-kie-issues/issues/169
+        accessor: expressionHolderId as any,
         label: relationExpression["@_label"] ?? DEFAULT_EXPRESSION_VARIABLE_NAME,
         dataType: relationExpression["@_typeRef"] ?? DmnBuiltInDataType.Undefined,
         isRowIndexColumn: false,
         width: undefined,
-        columns: columns.map((column, columnIndex) => ({
-          accessor: column["@_id"] as any,
-          label: column["@_name"],
-          dataType: column["@_typeRef"] ?? DmnBuiltInDataType.Undefined,
-          isRowIndexColumn: false,
-          minWidth: RELATION_EXPRESSION_COLUMN_MIN_WIDTH,
-          setWidth: setColumnWidth(columnIndex + 1),
-          width: getColumnWidth(columnIndex + 1, widths),
-        })),
+        columns: columns.map((column, columnIndex) => {
+          let columnDiffStatus = cellDiffMap.get(column["@_id"]!);
+          if (!columnDiffStatus) {
+            const cellStatuses = relationExpression.row?.map((row) => cellDiffMap.get(row.expression?.[columnIndex]?.["@_id"]!));
+            if (cellStatuses && cellStatuses.length > 0) {
+              if (cellStatuses.every((s) => s === "added")) {
+                columnDiffStatus = "added";
+              } else if (cellStatuses.every((s) => s === "deleted")) {
+                columnDiffStatus = "deleted";
+              }
+            }
+          }
+
+          return {
+            accessor: column["@_id"] as any,
+            label: column["@_name"],
+            dataType: column["@_typeRef"] ?? DmnBuiltInDataType.Undefined,
+            isRowIndexColumn: false,
+            minWidth: RELATION_EXPRESSION_COLUMN_MIN_WIDTH,
+            setWidth: setColumnWidth(columnIndex + 1),
+            width: getColumnWidth(columnIndex + 1, widths),
+            diffStatus: columnDiffStatus,
+          };
+        }),
       },
     ];
-  }, [columns, expressionHolderId, getColumnWidth, relationExpression, setColumnWidth, widths]);
+  }, [
+    columns,
+    expressionHolderId,
+    relationExpression,
+    setColumnWidth,
+    getColumnWidth,
+    widths,
+    cellDiffMap,
+    relationExpression.row,
+  ]);
 
-  const beeTableRows = useMemo<ROWTYPE[]>(
-    () =>
-      rows.map((row) => {
-        return columns.reduce(
-          (tableRow: ROWTYPE, column, columnIndex) => {
-            const cellExpression = row.expression?.[columnIndex];
-            if (cellExpression?.__$$element === "literalExpression") {
-              tableRow[column["@_id"]!] = {
-                id: cellExpression["@_id"] ?? generateUuid(),
-                content: cellExpression.text?.__$$text ?? "",
-              };
-            }
-            return tableRow;
-          },
-          { id: row["@_id"] }
-        );
-      }),
-    [rows, columns]
-  );
+  const beeTableRows = useMemo<ROWTYPE[]>(() => {
+    const mappedRows = rows.map((row) => {
+      const tableRow: ROWTYPE = { id: row["@_id"] };
+      columns.forEach((column, columnIndex) => {
+        const cellExpression = row.expression?.[columnIndex];
+        const exprId = cellExpression?.["@_id"];
+        const diffStatus = cellDiffMap.get(exprId!);
+
+        if (cellExpression?.__$$element === "literalExpression") {
+          tableRow[column["@_id"]!] = {
+            id: exprId ?? generateUuid(),
+            content: cellExpression.text?.__$$text ?? "",
+            diffStatus,
+          };
+        }
+      });
+      return tableRow;
+    });
+
+    return mappedRows.map((row) => {
+      let rowDiffStatus = cellDiffMap.get(row.id!);
+      if (!rowDiffStatus) {
+        const cellStatuses = columns.map((c) => row[c["@_id"]!]?.diffStatus);
+        if (cellStatuses.every((s) => s === "added")) {
+          rowDiffStatus = "added";
+        } else if (cellStatuses.every((s) => s === "deleted")) {
+          rowDiffStatus = "deleted";
+        }
+      }
+      return { ...row, diffStatus: rowDiffStatus };
+    });
+  }, [rows, columns, cellDiffMap]);
 
   const onCellUpdates = useCallback(
     (cellUpdates: BeeTableCellUpdate<ROWTYPE>[]) => {
@@ -591,6 +673,7 @@ export function RelationExpression({
         shouldRenderRowIndexColumn={true}
         shouldShowRowsInlineControls={true}
         shouldShowColumnsInlineControls={true}
+        highlightedColumns={highlightedColumns}
         // lastColumnMinWidth={lastColumnMinWidth} // FIXME: Check if this is a good strategy or not when doing https://github.com/apache/incubator-kie-issues/issues/181
       />
     </div>

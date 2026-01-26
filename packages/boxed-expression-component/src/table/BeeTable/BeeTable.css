@@ -65,6 +65,10 @@
   text-align: center;
 }
 
+.expression-info.header-cell-info {
+  position: relative;
+}
+
 .expression-container .table-component table th:not(.no-clickable-cell) .header-cell-info {
   cursor: pointer;
 }
@@ -422,4 +426,12 @@
 .logic-type-popover .pf-v5-c-menu {
   box-shadow: none;
   min-width: 210px;
+}
+
+.diff-status-icon {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
 }

@@ -25,6 +25,7 @@ import { BeeTableHeaderVisibility, BoxedExpression, InsertRowColumnsDirection } 
 import { BeeTableTh } from "./BeeTableTh";
 import { BeeTableThResizable } from "./BeeTableThResizable";
 import { ResizerStopBehavior } from "../../resizing/ResizingWidthsContext";
+import { PlusCircleIcon, TimesCircleIcon } from "@patternfly/react-icons";
 import { getCanvasFont, getTextWidth } from "../../resizing/WidthsToFitData";
 import { BeeTableThController } from "./BeeTableThController";
 import { assertUnreachable } from "../../expressions/ExpressionDefinitionRoot/ExpressionDefinitionLogicTypeSelector";
@@ -233,6 +234,8 @@ export function BeeTableHeader<R extends object>({
                   className="expression-info header-cell-info"
                   data-ouia-component-type="expression-column-header-cell-info"
                 >
+                  {column.diffStatus === "added" && <PlusCircleIcon className="diff-status-icon" />}
+                  {column.diffStatus === "deleted" && <TimesCircleIcon className="diff-status-icon" />}
                   {column.headerCellElement ? (
                     column.headerCellElement
                   ) : column.isInlineEditable && !isReadOnly ? (
