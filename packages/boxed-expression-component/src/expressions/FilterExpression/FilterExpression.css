@@ -24,9 +24,9 @@
 
 .filter-expression-cell .bracket-sign-container {
   background-color: var(--pf-v5-global--palette--black-200);
-  width: 20px;
-  min-width: 20px;
-  max-width: 20px;
+  width: clamp(10px, calc(20px * var(--bee-zoom-level, 1)), 40px);
+  min-width: clamp(10px, calc(20px * var(--bee-zoom-level, 1)), 40px);
+  max-width: clamp(10px, calc(20px * var(--bee-zoom-level, 1)), 40px);
   color: var(--pf-v5-global--palette--black-600);
   font-family: Menlo, monospace;
   display: flex;
@@ -35,7 +35,7 @@
 }
 
 .bracket-sign {
-  width: 20px;
-  min-width: 20px;
-  max-width: 20px;
+  width: clamp(10px, calc(20px * var(--bee-zoom-level, 1)), 40px);
+  min-width: clamp(10px, calc(20px * var(--bee-zoom-level, 1)), 40px);
+  max-width: clamp(10px, calc(20px * var(--bee-zoom-level, 1)), 40px);
 }

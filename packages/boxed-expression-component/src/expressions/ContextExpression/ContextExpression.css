@@ -26,7 +26,7 @@
   font-style: italic;
   font-family: Menlo, monospace;
   font-size: 0.8em;
-  padding: 4px;
+  padding: clamp(2px, calc(4px * var(--bee-zoom-level, 1)), 8px);
 }
 
 .expression-container .expression-variable-cell,

@@ -30,7 +30,7 @@
 
 .hit-policy-flex-container .pf-v5-c-menu {
   box-shadow: none;
-  width: 240px;
-  padding-left: 10px;
-  padding-right: 10px;
+  width: clamp(120px, calc(240px * var(--bee-zoom-level, 1)), 480px);
+  padding-left: clamp(5px, calc(10px * var(--bee-zoom-level, 1)), 20px);
+  padding-right: clamp(5px, calc(10px * var(--bee-zoom-level, 1)), 20px);
 }
