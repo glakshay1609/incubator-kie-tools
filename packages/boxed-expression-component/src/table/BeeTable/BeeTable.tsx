@@ -644,6 +644,14 @@ export function BeeTableInternal<R extends object>({
             }
             return undefined;
           })(),
+          minWidth: (() => {
+            const w = reactTableInstance.getTableProps().style?.minWidth;
+            const n = typeof w === "string" ? parseFloat(w) : w;
+            if (typeof n === "number" && !isNaN(n) && n > 0) {
+              return `calc(${n}px * var(--bee-zoom-level, 1))`;
+            }
+            return undefined;
+          })(),
         }}
       >
         <BeeTableHeader<R>
