@@ -35,6 +35,7 @@ export interface ExpressionContainerProps {
   parentElementId: string | undefined;
   parentElementTypeRef: string | undefined;
   parentElementName?: string;
+  zoom?: number;
 }
 
 export const ExpressionContainer: React.FunctionComponent<ExpressionContainerProps> = ({
@@ -46,6 +47,7 @@ export const ExpressionContainer: React.FunctionComponent<ExpressionContainerPro
   parentElementId,
   parentElementTypeRef,
   parentElementName,
+  zoom,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -108,7 +110,12 @@ export const ExpressionContainer: React.FunctionComponent<ExpressionContainerPro
   const getPlacementRef = useCallback(() => containerRef.current!, []);
 
   return (
-    <div ref={containerRef} className={"expression-container-box"} data-testid="kie-tools--bee--expression-container">
+    <div
+      ref={containerRef}
+      className={"expression-container-box"}
+      style={{ "--bee-zoom-level": zoom ?? 1 } as React.CSSProperties}
+      data-testid="kie-tools--bee--expression-container"
+    >
       <ExpressionDefinitionLogicTypeSelector
         expression={expression}
         onLogicTypeSelected={onLogicTypeSelected}

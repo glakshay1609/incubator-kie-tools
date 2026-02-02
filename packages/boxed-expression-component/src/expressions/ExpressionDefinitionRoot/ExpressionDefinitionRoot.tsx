@@ -29,6 +29,7 @@ export interface ExpressionDefinitionRootProps {
   expression?: Normalized<BoxedExpression>;
   isResetSupported: boolean | undefined;
   expressionHolderName?: string;
+  zoom?: number;
 }
 
 export function ExpressionDefinitionRoot({
@@ -37,6 +38,7 @@ export function ExpressionDefinitionRoot({
   expressionHolderId,
   expressionHolderTypeRef,
   expressionHolderName,
+  zoom,
 }: ExpressionDefinitionRootProps) {
   return (
     <ResizingWidthsContextProvider>
@@ -50,6 +52,7 @@ export function ExpressionDefinitionRoot({
           parentElementId={expressionHolderId}
           parentElementName={expressionHolderName}
           parentElementTypeRef={expressionHolderTypeRef}
+          zoom={zoom}
         />
       </div>
     </ResizingWidthsContextProvider>

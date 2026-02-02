@@ -17,7 +17,7 @@
  * under the License. 
  */
 :root {
-  --small-font-size: 13px;
+  --small-font-size: clamp(8px, calc(13px * var(--bee-zoom-level, 1)), 20px);
   --selected-cell: rgba(190, 200, 205, 0.3);
 }
 

@@ -184,13 +184,19 @@ export function BeeTableThResizable<R extends object>({
       thProps={{
         ...column.getHeaderProps(),
         style: {
-          width: column.width ? resizingWidth?.value : "100%",
-          minWidth: column.width ? resizingWidth?.value : "100%",
+          width:
+            column.width && resizingWidth
+              ? `clamp(${resizingWidth.value / 2}px, calc(${resizingWidth.value}px * var(--bee-zoom-level, 1)), ${resizingWidth.value * 2}px)`
+              : "100%",
+          minWidth:
+            column.width && resizingWidth
+              ? `clamp(${resizingWidth.value / 2}px, calc(${resizingWidth.value}px * var(--bee-zoom-level, 1)), ${resizingWidth.value * 2}px)`
+              : "100%",
           maxWidth:
             isParentColumn(column) || isFlexbileColumn(column)
-              ? fillingWidth
-              : column.width
-                ? resizingWidth?.value
+              ? `clamp(${fillingWidth / 2}px, calc(${fillingWidth}px * var(--bee-zoom-level, 1)), ${fillingWidth * 2}px)`
+              : column.width && resizingWidth
+                ? `clamp(${resizingWidth.value / 2}px, calc(${resizingWidth.value}px * var(--bee-zoom-level, 1)), ${resizingWidth.value * 2}px)`
                 : "100%",
         },
       }}

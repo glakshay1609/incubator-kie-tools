@@ -27,7 +27,7 @@
 
 .expression-container .expression-container-box,
 .expression-container .expression-type {
-  font-size: 14px;
+  font-size: clamp(9px, calc(14px * var(--bee-zoom-level, 1)), 24px);
   font-style: italic;
   color: gray;
 }

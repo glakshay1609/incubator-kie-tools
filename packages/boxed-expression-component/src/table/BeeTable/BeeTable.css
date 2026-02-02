@@ -34,7 +34,7 @@
 /** Table Header rules */
 
 .expression-container .table-component table th {
-  min-height: 55px;
+  min-height: clamp(30px, calc(55px * var(--bee-zoom-level, 1)), 100px);
   position: relative;
   padding: 0.7em 0;
   border-style: ridge;
@@ -80,7 +80,7 @@
 }
 
 .expression-container .table-component table thead tr {
-  height: 4em;
+  height: clamp(2em, calc(4em * var(--bee-zoom-level, 1)), 8em);
 }
 
 .expression-container .table-component table thead th,
@@ -375,8 +375,8 @@
 .add-row-button {
   position: absolute;
   border: 1px solid var(--pf-v5-global--palette--black-400);
-  height: 18px;
-  width: 18px;
+  height: clamp(10px, calc(18px * var(--bee-zoom-level, 1)), 36px);
+  width: clamp(10px, calc(18px * var(--bee-zoom-level, 1)), 36px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -399,8 +399,8 @@
   position: absolute;
   border: 1px solid var(--pf-v5-global--palette--black-400);
   bottom: 5px;
-  height: 18px;
-  width: 18px;
+  height: clamp(10px, calc(18px * var(--bee-zoom-level, 1)), 36px);
+  width: clamp(10px, calc(18px * var(--bee-zoom-level, 1)), 36px);
   display: flex;
   align-items: center;
   justify-content: center;

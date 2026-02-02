@@ -64,9 +64,9 @@
 .literal-expression .literal-expression-body-container .equals-sign {
   border-right: 1px solid var(--pf-v5-global--palette--black-300);
   background-color: var(--pf-v5-global--palette--black-200);
-  width: 20px;
-  min-width: 20px;
-  max-width: 20px;
+  width: clamp(10px, calc(20px * var(--bee-zoom-level, 1)), 40px);
+  min-width: clamp(10px, calc(20px * var(--bee-zoom-level, 1)), 40px);
+  max-width: clamp(10px, calc(20px * var(--bee-zoom-level, 1)), 40px);
   color: var(--pf-v5-global--palette--black-600);
   font-family: Menlo, monospace;
 }
