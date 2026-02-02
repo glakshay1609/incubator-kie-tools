@@ -193,7 +193,7 @@ export function BeeTableTh<R extends object>({
       <th
         rowSpan={rowSpan}
         {...thProps}
-        style={{ display: "table-cell", ...thProps.style }}
+        style={{ ...thProps.style, display: "table-cell" }}
         ref={thRef}
         onMouseDown={onMouseDown}
         onDoubleClick={isReadOnly ? undefined : onDoubleClick}

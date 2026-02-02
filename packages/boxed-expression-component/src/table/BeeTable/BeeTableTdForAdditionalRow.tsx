@@ -66,15 +66,15 @@ export function BeeTableTdForAdditionalRow<R extends object>({
     width:
       column.width && resizingWidth && resizingWidth.value > 0
         ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
-        : column.width,
+        : "100%",
     minWidth:
       column.width && resizingWidth && resizingWidth.value > 0
         ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
-        : column.width,
+        : "100%",
     maxWidth:
       column.width && resizingWidth && resizingWidth.value > 0
         ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
-        : column.width,
+        : "100%",
   };
 
   return isEmptyCell ? (

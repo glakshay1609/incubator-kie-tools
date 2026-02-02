@@ -184,7 +184,6 @@ export function BeeTableThResizable<R extends object>({
       thProps={{
         ...column.getHeaderProps(),
         style: {
-          ...column.getHeaderProps().style,
           width:
             column.width && resizingWidth && resizingWidth.value > 0
               ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
