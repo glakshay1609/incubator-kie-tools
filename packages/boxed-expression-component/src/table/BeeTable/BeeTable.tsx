@@ -636,9 +636,14 @@ export function BeeTableInternal<R extends object>({
         data-ouia-component-id={"expression-grid-table"}
         style={{
           ...reactTableInstance.getTableProps().style,
-          width: reactTableInstance.getTableProps().style?.width
-            ? `calc(${parseFloat(reactTableInstance.getTableProps().style!.width as string)}px * var(--bee-zoom-level, 1))`
-            : undefined,
+          width: (() => {
+            const w = reactTableInstance.getTableProps().style?.width;
+            const n = typeof w === "string" ? parseFloat(w) : w;
+            if (typeof n === "number" && !isNaN(n) && n > 0) {
+              return `calc(${n}px * var(--bee-zoom-level, 1))`;
+            }
+            return undefined;
+          })(),
         }}
       >
         <BeeTableHeader<R>

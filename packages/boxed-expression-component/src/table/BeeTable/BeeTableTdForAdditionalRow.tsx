@@ -64,15 +64,15 @@ export function BeeTableTdForAdditionalRow<R extends object>({
 
   const style = {
     width:
-      column.width && resizingWidth
+      column.width && resizingWidth && resizingWidth.value > 0
         ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
         : "100%",
     minWidth:
-      column.width && resizingWidth
+      column.width && resizingWidth && resizingWidth.value > 0
         ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
         : "100%",
     maxWidth:
-      column.width && resizingWidth
+      column.width && resizingWidth && resizingWidth.value > 0
         ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
         : "100%",
   };

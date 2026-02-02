@@ -158,12 +158,22 @@ export function BeeTableHeader<R extends object>({
             ...headerProps,
             style: {
               ...headerProps.style,
-              width: headerProps.style?.width
-                ? `calc(${parseFloat(headerProps.style.width as string)}px * var(--bee-zoom-level, 1))`
-                : undefined,
-              minWidth: headerProps.style?.minWidth
-                ? `calc(${parseFloat(headerProps.style.minWidth as string)}px * var(--bee-zoom-level, 1))`
-                : undefined,
+              width: (() => {
+                const w = headerProps.style?.width;
+                const n = typeof w === "string" ? parseFloat(w) : w;
+                if (typeof n === "number" && !isNaN(n) && n > 0) {
+                  return `calc(${n}px * var(--bee-zoom-level, 1))`;
+                }
+                return undefined;
+              })(),
+              minWidth: (() => {
+                const mw = headerProps.style?.minWidth;
+                const n = typeof mw === "string" ? parseFloat(mw) : mw;
+                if (typeof n === "number" && !isNaN(n) && n > 0) {
+                  return `calc(${n}px * var(--bee-zoom-level, 1))`;
+                }
+                return undefined;
+              })(),
             },
           }}
           className={classNames}
@@ -346,9 +356,14 @@ export function BeeTableHeader<R extends object>({
         ...headerGroupProps,
         style: {
           ...headerGroupProps.style,
-          width: headerGroupProps.style?.width
-            ? `calc(${parseFloat(headerGroupProps.style.width as string)}px * var(--bee-zoom-level, 1))`
-            : undefined,
+          width: (() => {
+            const w = headerGroupProps.style?.width;
+            const n = typeof w === "string" ? parseFloat(w) : w;
+            if (typeof n === "number" && !isNaN(n) && n > 0) {
+              return `calc(${n}px * var(--bee-zoom-level, 1))`;
+            }
+            return undefined;
+          })(),
         },
       };
       if (shouldRenderHeaderGroup(rowIndex)) {

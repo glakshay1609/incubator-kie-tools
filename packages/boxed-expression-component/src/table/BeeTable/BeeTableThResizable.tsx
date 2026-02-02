@@ -185,17 +185,17 @@ export function BeeTableThResizable<R extends object>({
         ...column.getHeaderProps(),
         style: {
           width:
-            column.width && resizingWidth
+            column.width && resizingWidth && resizingWidth.value > 0
               ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
               : "100%",
           minWidth:
-            column.width && resizingWidth
+            column.width && resizingWidth && resizingWidth.value > 0
               ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
               : "100%",
           maxWidth:
-            isParentColumn(column) || isFlexbileColumn(column)
+            (isParentColumn(column) || isFlexbileColumn(column)) && fillingWidth > 0
               ? `calc(${fillingWidth}px * var(--bee-zoom-level, 1))`
-              : column.width && resizingWidth
+              : column.width && resizingWidth && resizingWidth.value > 0
                 ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
                 : "100%",
         },

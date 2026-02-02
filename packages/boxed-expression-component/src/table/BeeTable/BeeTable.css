@@ -38,7 +38,7 @@
 /** Table Header rules */
 
 .expression-container .table-component table th {
-  min-height: clamp(30px, calc(55px * var(--bee-zoom-level, 1)), 100px);
+  min-height: calc(55px * var(--bee-zoom-level, 1));
   position: relative;
   padding: 0.7em 0;
   border-style: ridge;
@@ -55,7 +55,7 @@
 
 .expression-container .table-component table th.fixed-column {
   font-weight: 400;
-  min-width: clamp(30px, calc(60px * var(--bee-zoom-level, 1)), 120px);
+  min-width: calc(60px * var(--bee-zoom-level, 1));
   background-color: initial;
 }
 
@@ -67,6 +67,7 @@
   transform: translate(-50%, -50%);
   width: 100%;
   text-align: center;
+  box-sizing: border-box;
 }
 
 .expression-container .table-component table th:not(.no-clickable-cell) .header-cell-info {
@@ -74,7 +75,7 @@
 }
 
 .expression-container .table-component table th:not(.no-clickable-cell) .header-cell-info .name {
-  min-height: 21px;
+  min-height: calc(21px * var(--bee-zoom-level, 1));
 }
 
 .header-cell-element-extension {
@@ -84,7 +85,7 @@
 }
 
 .expression-container .table-component table thead tr {
-  height: clamp(2em, calc(4em * var(--bee-zoom-level, 1)), 8em);
+  height: calc(4em * var(--bee-zoom-level, 1));
 }
 
 .expression-container .table-component table thead th,
@@ -149,8 +150,8 @@
 .expression-container .table-component table tbody td.selected:not(.editing):after {
   position: absolute;
   content: "";
-  width: calc(100% + 2px);
-  height: calc(100% + 2px);
+  width: calc(100% + calc(2px * var(--bee-zoom-level, 1)));
+  height: calc(100% + calc(2px * var(--bee-zoom-level, 1)));
   z-index: 5;
 }
 
@@ -196,14 +197,14 @@
 .expression-container .table-component table thead th.active:after,
 .expression-container .table-component table tbody td.active:after {
   position: absolute;
-  top: -2px !important;
-  left: -2px !important;
+  top: calc(-2px * var(--bee-zoom-level, 1)) !important;
+  left: calc(-2px * var(--bee-zoom-level, 1)) !important;
   content: "";
-  width: calc(100% + 4px) !important;
-  height: calc(100% + 4px) !important;
+  width: calc(100% + calc(4px * var(--bee-zoom-level, 1))) !important;
+  height: calc(100% + calc(4px * var(--bee-zoom-level, 1))) !important;
   z-index: 6 !important;
-  border: 3px solid #438cb1 !important;
-  border-radius: 3px !important;
+  border: calc(3px * var(--bee-zoom-level, 1)) solid #438cb1 !important;
+  border-radius: calc(3px * var(--bee-zoom-level, 1)) !important;
 }
 
 /** Table Body rules */
@@ -267,8 +268,8 @@
   position: absolute;
   top: 0px;
   left: 0px;
-  height: 40px;
-  width: 40px;
+  height: calc(40px * var(--bee-zoom-level, 1));
+  width: calc(40px * var(--bee-zoom-level, 1));
   clip-path: polygon(0% 100%, 100% 0%, 0% 0%);
   padding-left: 0.2em;
 }
@@ -282,8 +283,8 @@
   position: absolute;
   top: 0px;
   left: 0px;
-  height: 40px;
-  width: 40px;
+  height: calc(40px * var(--bee-zoom-level, 1));
+  width: calc(40px * var(--bee-zoom-level, 1));
   clip-path: polygon(0% 100%, 100% 0%, 0% 0%);
   padding-left: 0.2em;
 }
@@ -304,7 +305,7 @@
   align-items: flex-start;
   justify-content: center;
   box-sizing: border-box;
-  min-width: clamp(30px, calc(60px * var(--bee-zoom-level, 1)), 120px);
+  min-width: calc(60px * var(--bee-zoom-level, 1));
 }
 
 .expression-container .table-component table tbody tr td.row-index-column-cell {
@@ -314,28 +315,28 @@
 .expression-container .table-component table tbody tr .empty-cell {
   display: inline-block;
   box-sizing: border-box;
-  min-width: clamp(30px, calc(60px * var(--bee-zoom-level, 1)), 120px);
+  min-width: calc(60px * var(--bee-zoom-level, 1));
 }
 
 /** Handle for resizing columns */
 
 .expression-container .pf-v5-c-drawer {
   background-color: inherit;
-  width: 8px;
-  min-width: 8px;
+  width: calc(8px * var(--bee-zoom-level, 1));
+  min-width: calc(8px * var(--bee-zoom-level, 1));
 }
 
 .expression-container .pf-v5-c-drawer__splitter {
   background-color: inherit;
-  width: 8px;
+  width: calc(8px * var(--bee-zoom-level, 1));
 }
 
 .expression-container .pf-v5-c-drawer {
   --pf-v5-c-drawer__splitter--after--BorderLeftWidth: var(--pf-v5-global--BorderWidth--sm);
   position: absolute;
-  min-width: 8px;
-  max-width: 8px;
-  right: 2px;
+  min-width: calc(8px * var(--bee-zoom-level, 1));
+  max-width: calc(8px * var(--bee-zoom-level, 1));
+  right: calc(2px * var(--bee-zoom-level, 1));
   top: 0;
   bottom: 0;
 }
@@ -379,8 +380,8 @@
 .add-row-button {
   position: absolute;
   border: 1px solid var(--pf-v5-global--palette--black-400);
-  height: clamp(10px, calc(18px * var(--bee-zoom-level, 1)), 36px);
-  width: clamp(10px, calc(18px * var(--bee-zoom-level, 1)), 36px);
+  height: calc(18px * var(--bee-zoom-level, 1));
+  width: calc(18px * var(--bee-zoom-level, 1));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -402,9 +403,9 @@
 .add-column-button {
   position: absolute;
   border: 1px solid var(--pf-v5-global--palette--black-400);
-  bottom: 5px;
-  height: clamp(10px, calc(18px * var(--bee-zoom-level, 1)), 36px);
-  width: clamp(10px, calc(18px * var(--bee-zoom-level, 1)), 36px);
+  bottom: calc(5px * var(--bee-zoom-level, 1));
+  height: calc(18px * var(--bee-zoom-level, 1));
+  width: calc(18px * var(--bee-zoom-level, 1));
   display: flex;
   align-items: center;
   justify-content: center;
