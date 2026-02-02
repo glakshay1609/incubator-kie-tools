@@ -257,15 +257,15 @@ export function BeeTableTd<R extends object>({
           minHeight: `clamp(30px, calc(60px * var(--bee-zoom-level, 1)), 120px)`,
           width:
             column.width && resizingWidth
-              ? `clamp(${resizingWidth.value / 2}px, calc(${resizingWidth.value}px * var(--bee-zoom-level, 1)), ${resizingWidth.value * 2}px)`
+              ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
               : "100%",
           minWidth:
             column.width && resizingWidth
-              ? `clamp(${resizingWidth.value / 2}px, calc(${resizingWidth.value}px * var(--bee-zoom-level, 1)), ${resizingWidth.value * 2}px)`
+              ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
               : "100%",
           maxWidth:
             column.width && resizingWidth
-              ? `clamp(${resizingWidth.value / 2}px, calc(${resizingWidth.value}px * var(--bee-zoom-level, 1)), ${resizingWidth.value * 2}px)`
+              ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
               : "100%",
         }}
       >

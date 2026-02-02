@@ -17,7 +17,11 @@
  * under the License. 
  */
 
-.expression-container .table-component,
+.expression-container .table-component {
+  font-style: normal;
+  width: 100%;
+}
+
 .expression-container .table-component table {
   font-style: normal;
 }
@@ -51,7 +55,7 @@
 
 .expression-container .table-component table th.fixed-column {
   font-weight: 400;
-  min-width: 60px;
+  min-width: clamp(30px, calc(60px * var(--bee-zoom-level, 1)), 120px);
   background-color: initial;
 }
 
@@ -300,7 +304,7 @@
   align-items: flex-start;
   justify-content: center;
   box-sizing: border-box;
-  min-width: 60px;
+  min-width: clamp(30px, calc(60px * var(--bee-zoom-level, 1)), 120px);
 }
 
 .expression-container .table-component table tbody tr td.row-index-column-cell {
@@ -310,7 +314,7 @@
 .expression-container .table-component table tbody tr .empty-cell {
   display: inline-block;
   box-sizing: border-box;
-  min-width: 60px;
+  min-width: clamp(30px, calc(60px * var(--bee-zoom-level, 1)), 120px);
 }
 
 /** Handle for resizing columns */

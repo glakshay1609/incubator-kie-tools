@@ -17,6 +17,10 @@
  * under the License. 
  */
 
+.decision-table-expression {
+  width: 100%;
+}
+
 .expression-container .decision-table-expression table thead th.input,
 .expression-container .decision-table-expression table thead th.input .add-column-button {
   background-color: #def3ff;

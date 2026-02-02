@@ -145,6 +145,7 @@ export function BeeTableHeader<R extends object>({
       const columnKey = getColumnKey(column);
       const classNames = `${columnKey} fixed-column no-clickable-cell counter-header-cell`;
 
+      const headerProps = column.getHeaderProps();
       return (
         <BeeTableTh
           rowSpan={rowSpan}
@@ -153,7 +154,18 @@ export function BeeTableHeader<R extends object>({
           columnKey={columnKey}
           columnIndex={0}
           rowIndex={rowIndex}
-          thProps={column.getHeaderProps()}
+          thProps={{
+            ...headerProps,
+            style: {
+              ...headerProps.style,
+              width: headerProps.style?.width
+                ? `calc(${parseFloat(headerProps.style.width as string)}px * var(--bee-zoom-level, 1))`
+                : undefined,
+              minWidth: headerProps.style?.minWidth
+                ? `calc(${parseFloat(headerProps.style.minWidth as string)}px * var(--bee-zoom-level, 1))`
+                : undefined,
+            },
+          }}
           className={classNames}
           groupType={column.groupType}
           isLastLevelColumn={(column.columns?.length ?? 0) <= 0}
@@ -329,7 +341,16 @@ export function BeeTableHeader<R extends object>({
       const rowIndex = -(reactTableInstance.headerGroups.length - index);
       let lastParentalHeaderCellIndex = 0;
 
-      const { key, ...props } = { ...headerGroup.getHeaderGroupProps(), style: {} };
+      const headerGroupProps = headerGroup.getHeaderGroupProps();
+      const { key, ...props } = {
+        ...headerGroupProps,
+        style: {
+          ...headerGroupProps.style,
+          width: headerGroupProps.style?.width
+            ? `calc(${parseFloat(headerGroupProps.style.width as string)}px * var(--bee-zoom-level, 1))`
+            : undefined,
+        },
+      };
       if (shouldRenderHeaderGroup(rowIndex)) {
         return (
           <tr key={key} {...props}>

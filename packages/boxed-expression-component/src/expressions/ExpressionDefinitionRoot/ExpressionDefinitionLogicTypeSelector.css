@@ -37,21 +37,21 @@
 .expression-container .logic-type-selector.logic-type-not-present {
   cursor: pointer;
   justify-content: center;
-  min-width: 210px;
-  font-size: 1rem;
+  min-width: clamp(105px, calc(210px * var(--bee-zoom-level, 1)), 420px);
+  font-size: clamp(0.5rem, calc(1rem * var(--bee-zoom-level, 1)), 2rem);
 }
 
 .expression-container .logic-type-selector.logic-type-selected {
   cursor: default;
   text-align: left;
   padding: 0; /* That's NESTED_EXPRESSION_RESET_MARGIN. Changing this will alter all Widths.ts calculations */
-  align-items: flex-start;
+  align-items: stretch;
   flex-direction: column;
 }
 
 .expression-container .logic-type-selector.logic-type-selected .logic-type-selected-header {
   color: black;
-  padding: 0 0 0 8px;
+  padding: 0 0 0 clamp(4px, calc(8px * var(--bee-zoom-level, 1)), 16px);
   border-bottom: 1px solid var(--pf-v5-global--palette--black-500);
   border-top: 1px solid var(--pf-v5-global--palette--black-400);
   border-left: 1px solid var(--pf-v5-global--palette--black-400);
@@ -66,7 +66,7 @@
 
 .expression-container .logic-type-selector.logic-type-selected .logic-type-selected-header .pf-v5-c-dropdown__menu {
   padding: 0;
-  min-width: 300px;
+  min-width: clamp(150px, calc(300px * var(--bee-zoom-level, 1)), 600px);
 }
 
 .expression-container
