@@ -20,11 +20,11 @@
 .boxed-expression-provider .hit-policy-container,
 .boxed-expression-provider .hit-policy-selector,
 .boxed-expression-provider .builtin-aggregator-selector {
-  font-size: small;
+  font-size: calc(0.8em * var(--bee-zoom-level, 1));
 }
 
 .hit-policy-flex-container {
-  padding-top: 10px;
+  padding-top: calc(10px * var(--bee-zoom-level, 1));
   display: flex;
 }
 

@@ -364,6 +364,14 @@ export function BeeTableHeader<R extends object>({
             }
             return undefined;
           })(),
+          minWidth: (() => {
+            const w = headerGroupProps.style?.minWidth;
+            const n = typeof w === "string" ? parseFloat(w) : w;
+            if (typeof n === "number" && !isNaN(n) && n > 0) {
+              return `calc(${n}px * var(--bee-zoom-level, 1))`;
+            }
+            return undefined;
+          })(),
         },
       };
       if (shouldRenderHeaderGroup(rowIndex)) {
