@@ -67,7 +67,7 @@ import { Flex, FlexItem } from "@patternfly/react-core/dist/js/layouts/Flex";
 import { ArrowRightIcon } from "@patternfly/react-icons/dist/js/icons/arrow-right-icon";
 import { InfoIcon } from "@patternfly/react-icons/dist/js/icons/info-icon";
 import * as React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as RF from "reactflow";
 import { builtInFeelTypes } from "../dataTypes/BuiltInFeelTypes";
 import { DataTypeIndex } from "../dataTypes/DataTypes";
@@ -93,6 +93,9 @@ import {
 } from "../refactor/RefactorConfirmationDialog";
 import { EvaluationHighlightsBadge } from "../evaluationHighlights/EvaluationHighlightsBadge";
 import { useDmnEditor } from "../DmnEditorContext";
+import { Button } from "@patternfly/react-core/dist/js/components/Button";
+import { MinusIcon, PlusIcon } from "@patternfly/react-icons/dist/js/icons";
+import { FitToScreenIcon } from "@patternfly/react-icons/dist/js/icons/fit-to-screen-icon";
 
 export function BoxedExpressionScreen({ container }: { container: React.RefObject<HTMLElement> }) {
   const { externalModelsByNamespace } = useExternalModels();
@@ -449,6 +452,49 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
     });
   }, [dmnEditorStoreApi, newExpression, setExpression]);
 
+  const [zoom, setZoom] = useState(1);
+  const [isEditingZoom, setEditingZoom] = useState(false);
+  const [zoomInputValue, setZoomInputValue] = useState(`${Math.floor(zoom * 100)}%`);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const transform = useMemo(() => `translate(${position.x}px, ${position.y}px) scale(${zoom})`, [position, zoom]);
+
+  useEffect(() => {
+    if (!isEditingZoom) {
+      setZoomInputValue(`${Math.floor(zoom * 100)}%`);
+    }
+  }, [zoom, isEditingZoom]);
+
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const isPanning = useRef(false);
+  const lastPanningPosition = useRef({ x: 0, y: 0 });
+
+  const fitView = useCallback(() => {
+    if (!viewportRef.current || !contentRef.current) {
+      return;
+    }
+
+    const viewport = viewportRef.current;
+    const content = contentRef.current;
+
+    if (content.offsetWidth <= viewport.offsetWidth && content.offsetHeight <= viewport.offsetHeight) {
+      setZoom(1);
+      setPosition({ x: 0, y: 0 });
+      return;
+    }
+
+    const zoom = Math.min(
+      (viewport.offsetWidth - 80) / content.offsetWidth,
+      (viewport.offsetHeight - 80) / content.offsetHeight
+    );
+    setZoom(zoom);
+    setPosition({ x: 0, y: 0 });
+  }, []);
+
+  useLayoutEffect(() => {
+    fitView();
+  }, [activeDrgElementId, fitView]);
+
   return (
     <>
       <>
@@ -527,10 +573,136 @@ export function BoxedExpressionScreen({ container }: { container: React.RefObjec
           }}
         />
 
-        <div style={{ flexGrow: 1 }}>
-          <BoxedExpressionEditor
-            beeGwtService={beeGwtService}
-            pmmlDocuments={pmmlDocuments}
+        <div
+          ref={viewportRef}
+          style={{ flexGrow: 1, overflow: "hidden", position: "relative" }}
+          onMouseDown={(e) => {
+            if (e.target !== viewportRef.current) {
+              return;
+            }
+            isPanning.current = true;
+            lastPanningPosition.current = { x: e.clientX, y: e.clientY };
+          }}
+          onMouseMove={(e) => {
+            if (!isPanning.current) {
+              return;
+            }
+            const delta = {
+              x: e.clientX - lastPanningPosition.current.x,
+              y: e.clientY - lastPanningPosition.current.y,
+            };
+            setPosition({
+              x: position.x + delta.x,
+              y: position.y + delta.y,
+            });
+            lastPanningPosition.current = { x: e.clientX, y: e.clientY };
+          }}
+          onMouseUp={() => {
+            isPanning.current = false;
+          }}
+        >
+          <div
+            ref={contentRef}
+            style={{
+              transform,
+              width: "fit-content",
+              height: "fit-content",
+              transformOrigin: "0 0",
+            }}
+          >
+            <BoxedExpressionEditor
+              beeGwtService={beeGwtService}
+              pmmlDocuments={pmmlDocuments}
+              isResetSupportedOnRootExpression={isResetSupportedOnRootExpression}
+              expressionHolderId={activeDrgElementId!}
+              expressionHolderName={drgElement?.variable?.["@_name"] ?? drgElement?.["@_name"] ?? ""}
+              expressionHolderTypeRef={
+                drgElement?.variable?.["@_typeRef"] ?? expression?.boxedExpression?.["@_typeRef"]
+              }
+              expression={expression?.boxedExpression}
+              onExpressionChange={onExpressionChange}
+              dataTypes={dataTypes}
+              scrollableParentRef={viewportRef}
+              onRequestFeelIdentifiers={onRequestFeelIdentifiers}
+              widthsById={widthsById}
+              onWidthsChange={onWidthsChange}
+              isReadOnly={settings.isReadOnly}
+              evaluationHitsCountById={
+                isEvaluationHighlightsEnabled
+                  ? evaluationResultsByNodeId?.get(activeDrgElementId ?? "")?.evaluationHitsCountByRuleOrRowId
+                  : undefined
+              }
+            />
+          </div>
+        </div>
+        <div
+          style={{
+            position: "absolute",
+            bottom: "12px",
+            right: "12px",
+            display: "flex",
+            gap: "4px",
+            alignItems: "center",
+          }}
+        >
+          <Button
+            variant="plain"
+            onClick={() => setZoom((prev) => Math.max(0.1, prev - 0.1))}
+            isDisabled={zoom <= 0.1}
+          >
+            <MinusIcon />
+          </Button>
+          <div
+            style={{
+              border: "solid 1px #ccc",
+              borderRadius: "2px",
+              padding: "2px 4px",
+              minWidth: "40px",
+              textAlign: "center",
+            }}
+            onDoubleClick={() => setEditingZoom(true)}
+          >
+            <input
+              type="text"
+              value={zoomInputValue}
+              style={{
+                width: "40px",
+                border: 0,
+                padding: 0,
+                background: "transparent",
+                textAlign: "center",
+              }}
+              onChange={(e) => setZoomInputValue(e.currentTarget.value)}
+              onFocus={() => setEditingZoom(true)}
+              onBlur={() => {
+                setEditingZoom(false);
+                const newZoom = parseFloat(zoomInputValue) / 100;
+                if (!isNaN(newZoom)) {
+                  setZoom(newZoom);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const newZoom = parseFloat(e.currentTarget.value) / 100;
+                  if (!isNaN(newZoom)) {
+                    setZoom(newZoom);
+                  }
+                  e.currentTarget.blur();
+                }
+              }}
+            />
+          </div>
+          <Button variant="plain" onClick={() => setZoom((prev) => prev + 0.1)}>
+            <PlusIcon />
+          </Button>
+          <Button variant="plain" onClick={fitView}>
+            <FitToScreenIcon />
+          </Button>
+        </div>
+      </>
+    </>
+  );
+}
             isResetSupportedOnRootExpression={isResetSupportedOnRootExpression}
             expressionHolderId={activeDrgElementId!}
             expressionHolderName={drgElement?.variable?.["@_name"] ?? drgElement?.["@_name"] ?? ""}
