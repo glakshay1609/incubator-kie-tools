@@ -92,3 +92,22 @@ To use a PMML model in DMN:
 2. Set the BKM's logic type to **PMML**.
 3. Point to the PMML file and the specific model name.
 4. Call this BKM from a **Decision** node, passing the required inputs from the DMN model.
+
+## Technical Architecture
+
+Understanding how PMML models are executed can help in deploying and troubleshooting them.
+
+### 1. The Execution Engine
+The actual execution of PMML models in the KIE ecosystem is handled by the **Kie PMML Trusty Engine**. This is a Java-based engine designed for high-performance and cloud-native execution.
+
+### 2. Runtime Environment
+PMML models typically run within a **Kogito** service. Kogito is a cloud-native business automation framework based on Quarkus or Spring Boot.
+- **Compiled Mode**: Your PMML model is compiled into Java code at build time. This provides the best performance and is recommended for production.
+- **JIT (Just-In-Time) Mode**: The **Kogito JIT Runner** allows for dynamic execution. You can send the PMML XML directly to the runner, which interprets and executes it on the fly. This is primarily used for development, testing, and tools like the KIE Sandbox "DMN Runner".
+
+### 3. Providing the Model and Environment
+- **Environment**: Provided by the Quarkus/Spring Boot runtime. In a containerized environment (like Kubernetes), this is usually a microservice.
+- **Model**: Provided as a `.pmml` file. In compiled mode, the file is part of your project's resources. In JIT mode, it's sent as part of the request payload.
+
+### 4. Integration Layer
+The **Kogito Decision Service** acts as the orchestrator. If your decision logic involves both DMN and PMML, Kogito handles the communication between the DMN engine and the PMML engine, ensuring that data is correctly mapped and passed between them.
