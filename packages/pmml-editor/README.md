@@ -25,6 +25,14 @@ Code herein is subject to change without notice.
 
 Nothing should be considered concrete at this point.
 
+---
+
+### **Documentation**
+
+- [PMML Editor User Guide](./docs/USER_GUIDE.md)
+
+---
+
 In order to run the development webapp:
 
 `pnpm start`
