@@ -254,10 +254,19 @@ export function BeeTableTd<R extends object>({
         data-ouia-component-id={`expression-column-${columnIndex}`}
         style={{
           outline: "none",
-          minHeight: `60px`,
-          width: column.width ? resizingWidth?.value : "100%",
-          minWidth: column.width ? resizingWidth?.value : "100%",
-          maxWidth: column.width ? resizingWidth?.value : "100%",
+          minHeight: `calc(60px * var(--bee-zoom-level, 1))`,
+          width:
+            column.width && resizingWidth && resizingWidth.value > 0
+              ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
+              : column.width,
+          minWidth:
+            column.width && resizingWidth && resizingWidth.value > 0
+              ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
+              : column.width,
+          maxWidth:
+            column.width && resizingWidth && resizingWidth.value > 0
+              ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
+              : column.width,
         }}
       >
         {column.isRowIndexColumn ? (

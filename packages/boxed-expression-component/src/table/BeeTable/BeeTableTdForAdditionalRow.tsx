@@ -62,6 +62,21 @@ export function BeeTableTdForAdditionalRow<R extends object>({
 
   const { cssClasses, onMouseDown, onDoubleClick } = useBeeTableSelectableCell(tdRef, rowIndex, columnIndex);
 
+  const style = {
+    width:
+      column.width && resizingWidth && resizingWidth.value > 0
+        ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
+        : column.width,
+    minWidth:
+      column.width && resizingWidth && resizingWidth.value > 0
+        ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
+        : column.width,
+    maxWidth:
+      column.width && resizingWidth && resizingWidth.value > 0
+        ? `calc(${resizingWidth.value}px * var(--bee-zoom-level, 1))`
+        : column.width,
+  };
+
   return isEmptyCell ? (
     <td
       ref={tdRef}
@@ -69,6 +84,7 @@ export function BeeTableTdForAdditionalRow<R extends object>({
       className={`empty-cell ${cssClasses}`}
       onMouseDown={onMouseDown}
       onDoubleClick={onDoubleClick}
+      style={style}
     >
       <br />
     </td>
@@ -80,6 +96,7 @@ export function BeeTableTdForAdditionalRow<R extends object>({
       tabIndex={-1}
       onMouseDown={onMouseDown}
       onDoubleClick={onDoubleClick}
+      style={style}
     >
       {children}
 

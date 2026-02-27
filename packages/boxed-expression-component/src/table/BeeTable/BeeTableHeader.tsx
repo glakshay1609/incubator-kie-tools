@@ -145,6 +145,7 @@ export function BeeTableHeader<R extends object>({
       const columnKey = getColumnKey(column);
       const classNames = `${columnKey} fixed-column no-clickable-cell counter-header-cell`;
 
+      const headerProps = column.getHeaderProps();
       return (
         <BeeTableTh
           rowSpan={rowSpan}
@@ -153,7 +154,28 @@ export function BeeTableHeader<R extends object>({
           columnKey={columnKey}
           columnIndex={0}
           rowIndex={rowIndex}
-          thProps={column.getHeaderProps()}
+          thProps={{
+            ...headerProps,
+            style: {
+              ...headerProps.style,
+              width: (() => {
+                const w = headerProps.style?.width;
+                const n = typeof w === "string" ? parseFloat(w) : w;
+                if (typeof n === "number" && !isNaN(n) && n > 0) {
+                  return `calc(${n}px * var(--bee-zoom-level, 1))`;
+                }
+                return undefined;
+              })(),
+              minWidth: (() => {
+                const mw = headerProps.style?.minWidth;
+                const n = typeof mw === "string" ? parseFloat(mw) : mw;
+                if (typeof n === "number" && !isNaN(n) && n > 0) {
+                  return `calc(${n}px * var(--bee-zoom-level, 1))`;
+                }
+                return undefined;
+              })(),
+            },
+          }}
           className={classNames}
           groupType={column.groupType}
           isLastLevelColumn={(column.columns?.length ?? 0) <= 0}
@@ -329,7 +351,29 @@ export function BeeTableHeader<R extends object>({
       const rowIndex = -(reactTableInstance.headerGroups.length - index);
       let lastParentalHeaderCellIndex = 0;
 
-      const { key, ...props } = { ...headerGroup.getHeaderGroupProps(), style: {} };
+      const headerGroupProps = headerGroup.getHeaderGroupProps();
+      const { key, ...props } = {
+        ...headerGroupProps,
+        style: {
+          ...headerGroupProps.style,
+          width: (() => {
+            const w = headerGroupProps.style?.width;
+            const n = typeof w === "string" ? parseFloat(w) : w;
+            if (typeof n === "number" && !isNaN(n) && n > 0) {
+              return `calc(${n}px * var(--bee-zoom-level, 1))`;
+            }
+            return undefined;
+          })(),
+          minWidth: (() => {
+            const w = headerGroupProps.style?.minWidth;
+            const n = typeof w === "string" ? parseFloat(w) : w;
+            if (typeof n === "number" && !isNaN(n) && n > 0) {
+              return `calc(${n}px * var(--bee-zoom-level, 1))`;
+            }
+            return undefined;
+          })(),
+        },
+      };
       if (shouldRenderHeaderGroup(rowIndex)) {
         return (
           <tr key={key} {...props}>

@@ -634,6 +634,25 @@ export function BeeTableInternal<R extends object>({
         {...reactTableInstance.getTableProps()}
         ref={tableComposableRef}
         data-ouia-component-id={"expression-grid-table"}
+        style={{
+          ...reactTableInstance.getTableProps().style,
+          width: (() => {
+            const w = reactTableInstance.getTableProps().style?.width;
+            const n = typeof w === "string" ? parseFloat(w) : w;
+            if (typeof n === "number" && !isNaN(n) && n > 0) {
+              return `calc(${n}px * var(--bee-zoom-level, 1))`;
+            }
+            return undefined;
+          })(),
+          minWidth: (() => {
+            const w = reactTableInstance.getTableProps().style?.minWidth;
+            const n = typeof w === "string" ? parseFloat(w) : w;
+            if (typeof n === "number" && !isNaN(n) && n > 0) {
+              return `calc(${n}px * var(--bee-zoom-level, 1))`;
+            }
+            return undefined;
+          })(),
+        }}
       >
         <BeeTableHeader<R>
           resizerStopBehavior={resizerStopBehavior}

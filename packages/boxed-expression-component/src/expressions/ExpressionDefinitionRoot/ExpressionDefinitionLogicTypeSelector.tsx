@@ -466,9 +466,11 @@ export function ExpressionDefinitionLogicTypeSelector({
           ref={selectExpressionMenuContainerRef}
           data-testid={"kie-tools--bee--select-expression"}
           style={
-            !expression && nestedExpressionContainer.resizingWidth
-              ? { width: `${nestedExpressionContainer.resizingWidth?.value}px` }
-              : {}
+            nestedExpressionContainer.resizingWidth && nestedExpressionContainer.resizingWidth.value > 0
+              ? {
+                  width: `calc(${nestedExpressionContainer.resizingWidth.value}px * var(--bee-zoom-level, 1))`,
+                }
+              : { width: "100%" }
           }
         >
           {i18n.selectExpression}
@@ -519,9 +521,11 @@ export function ExpressionDefinitionLogicTypeSelector({
           className={cssClass}
           ref={resetContextMenuContainerRef}
           style={
-            !expression && nestedExpressionContainer.resizingWidth
-              ? { width: `${nestedExpressionContainer.resizingWidth?.value}px` }
-              : {}
+            nestedExpressionContainer.resizingWidth && nestedExpressionContainer.resizingWidth.value > 0
+              ? {
+                  width: `calc(${nestedExpressionContainer.resizingWidth.value}px * var(--bee-zoom-level, 1))`,
+                }
+              : { width: "100%" }
           }
         >
           {expression ? (

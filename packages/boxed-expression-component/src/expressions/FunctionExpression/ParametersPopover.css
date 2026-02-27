@@ -18,7 +18,7 @@
  */
 
 .boxed-expression-provider .parameters-editor-popover .parameters-editor {
-  padding: 8px 14px;
+  padding: clamp(4px, calc(8px * var(--bee-zoom-level, 1)), 16px) clamp(7px, calc(14px * var(--bee-zoom-level, 1)), 28px);
 }
 
 .boxed-expression-provider .parameters-editor-popover .parameters-editor {
@@ -26,25 +26,25 @@
 }
 
 .boxed-expression-provider .parameters-editor-popover .parameters-editor .parameters-container {
-  height: 200px;
+  height: clamp(100px, calc(200px * var(--bee-zoom-level, 1)), 400px);
   overflow-y: scroll;
-  margin-top: 10px;
+  margin-top: clamp(5px, calc(10px * var(--bee-zoom-level, 1)), 20px);
   border: 1px solid var(--pf-v5-global--palette--black-300);
-  padding: 0 5px 5px 5px;
+  padding: 0 clamp(2px, calc(5px * var(--bee-zoom-level, 1)), 10px) clamp(2px, calc(5px * var(--bee-zoom-level, 1)), 10px) clamp(2px, calc(5px * var(--bee-zoom-level, 1)), 10px);
 }
 
 .boxed-expression-provider .parameters-editor-popover .parameters-editor .parameters-container-empty {
   overflow: hidden;
-  margin-top: 10px;
+  margin-top: clamp(5px, calc(10px * var(--bee-zoom-level, 1)), 20px);
   border: 1px solid var(--pf-v5-global--palette--black-300);
-  padding: 0 5px 5px 5px;
+  padding: 0 clamp(2px, calc(5px * var(--bee-zoom-level, 1)), 10px) clamp(2px, calc(5px * var(--bee-zoom-level, 1)), 10px) clamp(2px, calc(5px * var(--bee-zoom-level, 1)), 10px);
 }
 
 .boxed-expression-provider .parameters-editor-popover .parameters-editor .parameters-container .parameter-entry {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  padding-top: 5px;
+  padding-top: clamp(2px, calc(5px * var(--bee-zoom-level, 1)), 10px);
 }
 
 .boxed-expression-provider

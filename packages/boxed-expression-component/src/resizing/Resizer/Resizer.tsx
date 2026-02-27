@@ -23,6 +23,7 @@ import { Resizable } from "react-resizable";
 import { ResizerStopBehavior, ResizingWidth, useResizingWidthsDispatch } from "../../resizing/ResizingWidthsContext";
 import { DEFAULT_MIN_WIDTH } from "../WidthConstants";
 import "./Resizer.css";
+import { useBoxedExpressionEditor } from "../../BoxedExpressionEditorContext";
 
 export interface ResizerProps {
   minWidth: number | undefined;
@@ -54,18 +55,26 @@ export const Resizer: React.FunctionComponent<ResizerProps> = ({
   //
   // This whole thing is responsible for allowing any cell to shrink the entire table when resized.
 
+  const { zoom } = useBoxedExpressionEditor();
   const { getResizerRefs, setResizing: _setResizing } = useResizingWidthsDispatch();
 
   const [resizingStop__data, setResizingStop__data] = useState({ width: 0 });
   const [startResizingWidth, setStartResizingWidth] = useState({ width: 0 });
-  const onResizeStop = useCallback((e, data) => {
-    if (e.detail === 2) {
-      console.debug("Skipping resizeStop onMouseUp because onDoubleClick will handle it.");
-      return;
-    }
+  const onResizeStop = useCallback(
+    (e, data) => {
+      if (e.detail === 2) {
+        console.debug("Skipping resizeStop onMouseUp because onDoubleClick will handle it.");
+        return;
+      }
 
-    setResizingStop__data({ width: data.size.width });
-  }, []);
+      const physicalDelta = data.size.width - startResizingWidth.width;
+      const logicalDelta = physicalDelta / (zoom ?? 1);
+      const newLogicalWidth = startResizingWidth.width + logicalDelta;
+
+      setResizingStop__data({ width: newLogicalWidth });
+    },
+    [startResizingWidth.width, zoom]
+  );
 
   useEffect(() => {
     const resizingStopWidth = Math.floor(resizingStop__data.width);
@@ -115,9 +124,12 @@ export const Resizer: React.FunctionComponent<ResizerProps> = ({
 
   const onResize = useCallback(
     (_, data) => {
-      setResizingWidth?.({ value: Math.floor(data.size.width), isPivoting: true });
+      const physicalDelta = data.size.width - startResizingWidth.width;
+      const logicalDelta = physicalDelta / (zoom ?? 1);
+      const newLogicalWidth = startResizingWidth.width + logicalDelta;
+      setResizingWidth?.({ value: Math.floor(newLogicalWidth), isPivoting: true });
     },
-    [setResizingWidth]
+    [setResizingWidth, startResizingWidth.width, zoom]
   );
 
   const onResizeStart = useCallback(
@@ -140,6 +152,9 @@ export const Resizer: React.FunctionComponent<ResizerProps> = ({
       let widthToFitData;
       try {
         widthToFitData = getWidthToFitData?.();
+        if (widthToFitData !== undefined && zoom !== undefined && zoom !== 0) {
+          widthToFitData = widthToFitData / zoom;
+        }
       } catch (e) {
         // Ignore, as bugs can appear...
       }
@@ -160,7 +175,10 @@ export const Resizer: React.FunctionComponent<ResizerProps> = ({
   );
 
   const style = useMemo(() => {
-    return { width: resizingWidth?.value, minWidth };
+    return {
+      width: `calc(${resizingWidth?.value}px * var(--bee-zoom-level, 1))`,
+      minWidth: `calc(${minWidth}px * var(--bee-zoom-level, 1))`,
+    };
   }, [minWidth, resizingWidth?.value]);
 
   // COMMENTED OUT FOR DEBUGGING PURPOSES.
@@ -191,6 +209,7 @@ export const Resizer: React.FunctionComponent<ResizerProps> = ({
       {width && resizingWidth && (
         <Resizable
           width={resizingWidth?.value}
+          transformScale={zoom ?? 1}
           height={0}
           onResize={onResize}
           onResizeStop={onResizeStop}

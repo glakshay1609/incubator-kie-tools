@@ -18,10 +18,10 @@
  */
 
 .pmml-function-expression {
-  min-width: 300px;
+  min-width: clamp(150px, calc(300px * var(--bee-zoom-level, 1)), 600px);
   color: initial;
   font-style: initial;
-  padding: 8px;
+  padding: clamp(4px, calc(8px * var(--bee-zoom-level, 1)), 16px);
 }
 
 .pmml-function-expression-label .name {
@@ -37,7 +37,7 @@
 }
 
 .pmml-function-expression-label {
-  min-height: 60px;
+  min-height: clamp(30px, calc(60px * var(--bee-zoom-level, 1)), 120px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -45,7 +45,7 @@
 }
 
 .pf-v5-c-select.pmml-document-select > button {
-  min-height: 60px;
+  min-height: clamp(30px, calc(60px * var(--bee-zoom-level, 1)), 120px);
 }
 .pmml-document-select.pf-v5-c-select .pf-v5-c-select__toggle::before {
   border-style: hidden;

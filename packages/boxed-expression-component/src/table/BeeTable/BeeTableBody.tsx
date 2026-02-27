@@ -91,7 +91,31 @@ export function BeeTableBody<R extends object>({
 
       let evaluationHitsCountBadgeColumnIndex = -1;
       const renderTr = () => (
-        <tr className={rowClassName} key={rowKey} data-testid={`kie-tools--bee--expression-row-${rowIndex}`}>
+        <tr
+          {...row.getRowProps()}
+          className={rowClassName}
+          key={rowKey}
+          data-testid={`kie-tools--bee--expression-row-${rowIndex}`}
+          style={{
+            ...row.getRowProps().style,
+            width: (() => {
+              const w = row.getRowProps().style?.width;
+              const n = typeof w === "string" ? parseFloat(w) : w;
+              if (typeof n === "number" && !isNaN(n) && n > 0) {
+                return `calc(${n}px * var(--bee-zoom-level, 1))`;
+              }
+              return undefined;
+            })(),
+            minWidth: (() => {
+              const w = row.getRowProps().style?.minWidth;
+              const n = typeof w === "string" ? parseFloat(w) : w;
+              if (typeof n === "number" && !isNaN(n) && n > 0) {
+                return `calc(${n}px * var(--bee-zoom-level, 1))`;
+              }
+              return undefined;
+            })(),
+          }}
+        >
           {row.cells.map((cell, cellIndex) => {
             const columnKey = getColumnKey(reactTableInstance.allColumns[cellIndex]);
             const isColumnToRender =

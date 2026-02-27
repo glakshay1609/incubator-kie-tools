@@ -19,7 +19,7 @@
 
 .feel-input-textbox {
   overflow: hidden;
-  height: 36px;
+  height: clamp(20px, calc(36px * var(--bee-zoom-level, 1)), 72px);
   padding-block-start: var(--pf-v5-c-form-control--PaddingTop);
   padding-block-end: var(--pf-v5-c-form-control--PaddingBottom);
   padding-inline-start: var(--pf-v5-c-form-control--PaddingLeft);
@@ -34,12 +34,12 @@
  transform. In our case, the Popup uses transform: translate() to position. So we are manual position the
   suggest widget and its details just bellow the Textbox. */
 .feel-input-textbox .feel-input .suggest-widget {
-  top: 60px !important;
-  left: 14px !important;
+  top: clamp(30px, calc(60px * var(--bee-zoom-level, 1)), 120px) !important;
+  left: clamp(7px, calc(14px * var(--bee-zoom-level, 1)), 28px) !important;
 }
 .feel-input-textbox .feel-input .suggest-details-container {
-  top: 60px !important;
-  left: 430px !important;
+  top: clamp(30px, calc(60px * var(--bee-zoom-level, 1)), 120px) !important;
+  left: clamp(215px, calc(430px * var(--bee-zoom-level, 1)), 860px) !important;
 }
 
 .feel-input-textbox .feel-input {

@@ -65,6 +65,8 @@ export interface BoxedExpressionEditorProps {
   onRequestFeelIdentifiers?: OnRequestFeelIdentifiers;
   /** Hide DMN 1.4 boxed expressions */
   hideDmn14BoxedExpressions?: boolean;
+  /** Zoom level */
+  zoom?: number;
 }
 
 export function BoxedExpressionEditor({
@@ -84,6 +86,7 @@ export function BoxedExpressionEditor({
   widthsById,
   onWidthsChange,
   hideDmn14BoxedExpressions,
+  zoom,
 }: BoxedExpressionEditorProps) {
   return (
     <I18nDictionariesProvider
@@ -115,6 +118,7 @@ export function BoxedExpressionEditor({
           expressionHolderTypeRef={expressionHolderTypeRef}
           expression={expression}
           isResetSupported={isResetSupportedOnRootExpression}
+          zoom={zoom}
         />
       </BoxedExpressionEditorContextProvider>
     </I18nDictionariesProvider>

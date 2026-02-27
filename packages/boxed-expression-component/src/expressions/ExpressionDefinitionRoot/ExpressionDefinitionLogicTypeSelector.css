@@ -24,7 +24,7 @@
   display: -moz-box;
   display: -ms-flexbox;
   display: -webkit-flex;
-  min-height: 62px; /* That's the default Literal expression height. 20px * 3 lines + 2px for border-top and border-bottom */
+  min-height: calc(62px * var(--bee-zoom-level, 1)); /* That's the default Literal expression height. 20px * 3 lines + 2px for border-top and border-bottom */
   overflow: visible;
   transition: background-color 0.1s ease;
   border-radius: inherit;
@@ -37,43 +37,43 @@
 .expression-container .logic-type-selector.logic-type-not-present {
   cursor: pointer;
   justify-content: center;
-  min-width: 210px;
-  font-size: 1rem;
+  min-width: calc(210px * var(--bee-zoom-level, 1));
+  font-size: calc(1rem * var(--bee-zoom-level, 1));
 }
 
 .expression-container .logic-type-selector.logic-type-selected {
   cursor: default;
   text-align: left;
   padding: 0; /* That's NESTED_EXPRESSION_RESET_MARGIN. Changing this will alter all Widths.ts calculations */
-  align-items: flex-start;
+  align-items: stretch;
   flex-direction: column;
 }
 
 .expression-container .logic-type-selector.logic-type-selected .logic-type-selected-header {
   color: black;
-  padding: 0 0 0 8px;
+  padding: 0 0 0 calc(8px * var(--bee-zoom-level, 1));
   border-bottom: 1px solid var(--pf-v5-global--palette--black-500);
   border-top: 1px solid var(--pf-v5-global--palette--black-400);
   border-left: 1px solid var(--pf-v5-global--palette--black-400);
   border-right: 1px solid var(--pf-v5-global--palette--black-400);
   position: relative;
   width: 100%;
-  height: 20px;
-  border-radius: 6px 6px 0 0;
+  height: calc(20px * var(--bee-zoom-level, 1));
+  border-radius: calc(6px * var(--bee-zoom-level, 1)) calc(6px * var(--bee-zoom-level, 1)) 0 0;
   display: flex;
   align-items: flex-end;
 }
 
 .expression-container .logic-type-selector.logic-type-selected .logic-type-selected-header .pf-v5-c-dropdown__menu {
   padding: 0;
-  min-width: 300px;
+  min-width: calc(300px * var(--bee-zoom-level, 1));
 }
 
 .expression-container
   .logic-type-selector.logic-type-selected
   .logic-type-selected-header
   .pf-v5-c-dropdown__toggle-icon {
-  margin-left: 4px;
+  margin-left: calc(4px * var(--bee-zoom-level, 1));
 }
 
 .paste-from-clipboard-error .pf-v5-c-menu__item-description {

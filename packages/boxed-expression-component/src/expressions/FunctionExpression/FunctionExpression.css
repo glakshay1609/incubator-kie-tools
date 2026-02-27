@@ -34,7 +34,7 @@
 }
 
 .function-kind-popover {
-  width: 300px;
+  width: clamp(150px, calc(300px * var(--bee-zoom-level, 1)), 600px);
 }
 
 .function-kind-popover .pf-v5-c-menu {
