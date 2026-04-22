@@ -25,6 +25,89 @@ Code herein is subject to change without notice.
 
 Nothing should be considered concrete at this point.
 
+### Usage
+
+The PMML Editor is provided as a React component. Unlike the DMN Standalone editor, it can be embedded directly into a `div` without an `iframe` when used within a React application.
+
+#### Installation
+
+```bash
+pnpm install @kie-tools/pmml-editor
+```
+
+#### Integration
+
+To use the editor in your React application, import the `PMMLEditor` component. You can capture the editor instance using the `exposing` prop to interact with it programmatically (e.g., to get or set content).
+
+```tsx
+import React, { useRef, useCallback } from 'react';
+import { PMMLEditor } from '@kie-tools/pmml-editor';
+import "@patternfly/react-core/dist/styles/base.css";
+
+const MyPMMLEditorPage = ({ initialXml, isNew = false }) => {
+  const editorRef = useRef<PMMLEditor | null>(null);
+
+  // This is called when the editor component is ready
+  const onReady = useCallback(() => {
+    if (editorRef.current) {
+      if (isNew) {
+        // Create a new model by passing an empty string
+        editorRef.current.setContent("new-file.pmml", "");
+      } else {
+        // Edit an existing model
+        editorRef.current.setContent("existing-file.pmml", initialXml || "");
+      }
+    }
+  }, [initialXml, isNew]);
+
+  const saveContent = async () => {
+    if (editorRef.current) {
+      const xml = await editorRef.current.getContent();
+      console.log("Saved XML:", xml);
+    }
+  };
+
+  return (
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "10px" }}>
+        <button onClick={saveContent}>Save</button>
+      </div>
+      <div style={{ flexGrow: 1 }}>
+        <PMMLEditor
+          exposing={(instance) => (editorRef.current = instance)}
+          ready={onReady}
+          newEdit={(edit) => console.log("New edit:", edit)}
+          setNotifications={(path, notifications) => console.log("Validation:", notifications)}
+        />
+      </div>
+    </div>
+  );
+};
+```
+
+#### Props
+
+| Prop | Description |
+| --- | --- |
+| `exposing` | Callback that provides the `PMMLEditor` instance. |
+| `ready` | Callback triggered when the component is mounted and ready. |
+| `newEdit` | Triggered whenever a change is made in the editor. |
+| `setNotifications` | Provides real-time validation feedback (errors and warnings). |
+
+#### Instance API
+
+The instance obtained via the `exposing` prop provides the following methods:
+
+| Method | Description |
+| --- | --- |
+| `setContent(path: string, content: string)` | Sets the editor content. Pass `""` for a new model. |
+| `getContent(): Promise<string>` | Returns the current PMML XML. |
+| `undo(): Promise<void>` | Reverts the last change. |
+| `redo(): Promise<void>` | Re-applies the last undone change. |
+| `validate(): Notification[]` | Returns the current list of validation notifications. |
+
+### Development
+
 In order to run the development webapp:
 
 `pnpm start`
