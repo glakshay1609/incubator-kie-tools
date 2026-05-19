@@ -89,3 +89,45 @@ Feature: DMN Editor - Data Types
     When I select the Data Type "tExternalType" from "ExternalModel"
     Then I should see the "External" label in the Data Type Panel
     And the Data Type Panel for "tExternalType" should be read-only
+
+  Scenario: Associate a custom Data Type to another
+    Given a Data Type named "tAddress" exists
+    And a Data Type named "tEmployee" exists
+    And "tEmployee" is a struct
+    When I add a property "address" to "tEmployee" with type "tAddress"
+    Then the property "address" of "tEmployee" should have type "tAddress"
+
+  Scenario: Complex nesting of Data Types
+    Given a Data Type named "tCompany" exists
+    And "tCompany" is a struct
+    And "tCompany" has a property "departments" which is a collection
+    And "tCompany" has a property "departments" which is a struct
+    And "departments" has a property "manager" which is a struct
+    And "manager" has a property "name" of type "string"
+    Then I should see the property "name" nested under "manager" under "departments"
+
+  Scenario Outline: Collection constraints vs Collection item constraints
+    Given a Data Type named "tScores" exists
+    And "tScores" is a collection
+    And "tScores" is of type "number"
+    When I set a <level> constraint with value "<value>"
+    Then the Data Type "tScores" should have the <level> constraint "<value>"
+    Examples:
+      | level          | value    |
+      | Collection     | [1..100] |
+      | Collection item| > 0      |
+
+  Scenario: Jump to definition of an associated Data Type
+    Given a Data Type named "tBase" exists
+    And a Data Type named "tDerived" exists
+    And "tDerived" is associated with type "tBase"
+    When I click the "Jump to definition" button in the Data Type Panel for "tDerived"
+    Then the Data Type Panel should be open for "tBase"
+
+  Scenario: Cascade rename when refactoring a Data Type name
+    Given a Data Type named "tSourceType" exists
+    And a Data Type named "tUsageType" exists
+    And "tUsageType" has a property of type "tSourceType"
+    When I rename the Data Type "tSourceType" to "tNewType"
+    And I confirm the refactor in the confirmation dialog
+    Then the property of "tUsageType" should now have type "tNewType"
